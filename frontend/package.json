@@ -27,8 +27,7 @@
     "rollup-plugin-terser": "^5.1.2",
     "slice2js": "^3.7.2",
     "mxgraph": "^4.0.6",
-    "react-datasheet": "^1.4.0"      
+    "react-datasheet": "^1.4.0"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
