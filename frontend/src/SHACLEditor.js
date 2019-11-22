@@ -193,24 +193,25 @@ export default class SHACLEditor extends React.Component {
     }
     
     render() {
-	return (<div style={{position: "absolute",
-			     top: "0px",
-			     left: "200px",
-			     width: "100%"}}>
-		<button onClick={() => this.add_shacl_classes([null])}>ADD CLASS</button>
-		<button onClick={this.save}>SAVE</button>
-		<button onClick={this.load}>LOAD</button>
-		<input type="text" defaultValue="" ref={this.filename} onChange={(evt) => this.filename.current.value = evt.target.value}/>
-		<button onClick={() => this.graph.zoomIn()}>+</button>
-		<button onClick={() => this.graph.zoomOut()}>-</button>
-		<button onClick={() => this.graph.zoomActual()}>1:1</button>
-		<button onClick={() => this.remove()}>DEL</button>
-		<br/>
-		<div id="graphContainer" style={{position:'absolute',overflow:'hidden',top:'36px',left:'10px',bottom:'36px',right:'0px',height:'500px'}}>
+	return (<div style={{
+	    display: "grid",
+	    gridTemplateRows: "30px auto"}}
+		>
+		<div>
+		 <button onClick={() => this.add_shacl_classes([null])}>ADD CLASS</button>
+		 <button onClick={this.save}>SAVE</button>
+		 <button onClick={this.load}>LOAD</button>
+		 <input type="text" defaultValue="" ref={this.filename} onChange={(evt) => this.filename.current.value = evt.target.value}/>
+		 <button onClick={() => this.graph.zoomIn()}>+</button>
+		 <button onClick={() => this.graph.zoomOut()}>-</button>
+		 <button onClick={() => this.graph.zoomActual()}>1:1</button>
+		 <button onClick={() => this.remove()}>DEL</button>
+		</div>
+		<div id="graphContainer" style={{overflow:'hidden'}}>
 		</div>
 		<div id="graphOutlineContainer" style={{zIndex:"1",position:"absolute",overflow:"hidden",top:"0px",right:"0px",width:"320px",height:"120px",background:"transparent",borderStyle:"solid",borderColor:"lightgray"}}>
 		</div>
-		</div>);
+	        </div>);
     }
 };
 
