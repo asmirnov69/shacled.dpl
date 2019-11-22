@@ -3,10 +3,6 @@ import ReactDOM from 'react-dom';
 
 import SHACLClass from './SHACLClass.js';
 import SHACLClassView from './SHACLClassView.js';
-//import * as mxg from 'mxgraph';
-
-//let mmm = require('./node_modules/mxgraph/javascript/mxClient.js');
-
 let SHACLEditorMod = window.SHACLEditorMod;
 
 // suggested here: https://github.com/facebook/react/issues/10266#issuecomment-318120709

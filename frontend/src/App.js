@@ -2,6 +2,11 @@ import React from "react";
 import SHACLEditor from './SHACLEditor.js';
 import ReactDataSheet from 'react-datasheet';
 
+//
+// treeview example
+// https://material-ui.com/components/tree-view/
+// https://github.com/mui-org/material-ui/blob/master/docs/src/pages/components/tree-view/FileSystemNavigator.js
+//
 import { makeStyles } from '@material-ui/core/styles';
 import TreeView from '@material-ui/lab/TreeView';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
