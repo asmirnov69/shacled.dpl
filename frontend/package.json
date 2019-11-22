@@ -15,9 +15,14 @@
     "@babel/plugin-proposal-decorators": "^7.6.0",
     "@babel/plugin-transform-runtime": "^7.6.0",
     "@babel/preset-react": "^7.0.0",
+    "@material-ui/core": "^4.6.1",
+    "@material-ui/icons": "^4.5.1",
+    "@material-ui/lab": "^4.0.0-alpha.32",
     "d3": "^5.14.2",
     "ice": "^3.7.2",
+    "mxgraph": "^4.0.6",
     "react": "^16.9.0",
+    "react-datasheet": "^1.4.0",
     "react-dom": "^16.9.0",
     "rollup": "^1.21.3",
     "rollup-plugin-babel": "^4.3.3",
@@ -25,9 +30,7 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-terser": "^5.1.2",
-    "slice2js": "^3.7.2",
-    "mxgraph": "^4.0.6",
-    "react-datasheet": "^1.4.0"
+    "slice2js": "^3.7.2"
   },
   "dependencies": {}
 }

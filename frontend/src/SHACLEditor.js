@@ -197,7 +197,10 @@ export default class SHACLEditor extends React.Component {
     }
     
     render() {
-	return (<div>
+	return (<div style={{position: "absolute",
+			     top: "0px",
+			     left: "200px",
+			     width: "100%"}}>
 		<button onClick={() => this.add_shacl_classes([null])}>ADD CLASS</button>
 		<button onClick={this.save}>SAVE</button>
 		<button onClick={this.load}>LOAD</button>
