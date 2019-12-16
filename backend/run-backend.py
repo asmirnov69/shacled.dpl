@@ -1,5 +1,7 @@
 #import ipdb
 import Ice, sys, os
+os.environ['JAVA_HOME'] = '/usr/lib/jvm/java-11-openjdk-amd64'
+os.environ['JENA_HOME'] = '/home/asmirnov/Downloads/apache-jena-3.10.0'
 import prctl, signal
 import json
 
@@ -8,6 +10,8 @@ if not 'topdir' in os.environ:
 
 Ice.loadSlice("--all -I. -I{ICE_SLICE_DIR} {top}/backend/backend.ice".format(ICE_SLICE_DIR = Ice.getSliceDir(), top = os.environ['topdir']))
 import SHACLEditorMod
+
+import FusekiConnectionI
 
 class SHACLEditorI(SHACLEditorMod.SHACLEditorIfc):
     def saveDia(self, filename, dia_json, current = None):
@@ -46,6 +50,9 @@ if __name__ == "__main__":
         sys.stdout.flush()
 
         adapter.add(SHACLEditorI(), Ice.stringToIdentity("shacl_editor"))
+        fuseki_url = 'http://localhost:3030/testdb'
+        adapter.add(FusekiConnectionI.FusekiConnectionI(fuseki_url), Ice.stringToIdentity("fuseki"))
+        
         adapter.activate()
         communicator.waitForShutdown()
 

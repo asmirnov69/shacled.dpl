@@ -37,12 +37,17 @@ export default class SHACLEditor extends React.Component {
     componentDidMount() {
 	getBackendPort().then((backend_port) => {
 	    let backend_proxy_s = `shacl_editor:ws -h localhost -p ${backend_port}`;
-	    return window.ic.stringToProxy(backend_proxy_s);
-	}).then((o_prx) => {
-	    return SHACLEditorMod.SHACLEditorIfcPrx.checkedCast(o_prx);
-	}).then((prx) => {
-	    console.log("connected to backend");
+	    let fuseki_proxy_s = `fuseki:ws -h localhost -p ${backend_port}`;
+	    return Promise.all([window.ic.stringToProxy(backend_proxy_s),
+				window.ic.stringToProxy(fuseki_proxy_s)])
+	}).then(([o_prx, o_fuseki_prx]) => {
+	    return Promise.all(
+		[SHACLEditorMod.SHACLEditorIfcPrx.checkedCast(o_prx),
+		 SHACLEditorMod.FusekiConnectionPrx.checkedCast(o_fuseki_prx)])
+	}).then(([prx, fuseki_prx]) => {
 	    this.prx = prx;
+	    this.fuseki_prx = fuseki_prx;
+	    console.log("connected to backend", this.prx, this.fuseki_prx);
 	});
 	this.LoadGraph();
     }
@@ -50,7 +55,7 @@ export default class SHACLEditor extends React.Component {
     LoadGraph() {
 	debugger;
 	// Sets the image to be used for creating new connections
-	mxConnectionHandler.prototype.connectImage = new mxImage('images/green-dot.gif', 14, 14);
+	mxConnectionHandler.prototype.connectImage = new mxImage('./node_modules/mxgraph/javascript/dist/green-dot.gif', 14, 14);
 	
 	if (!mxClient.isBrowserSupported()) {
 	    mxUtils.error('Browser is not supported!', 200, false);
@@ -65,7 +70,7 @@ export default class SHACLEditor extends React.Component {
 	    graph.setCellsDisconnectable(false);
 	    graph.setCellsCloneable(false);
 	    graph.setAutoSizeCells(true);
-
+	    //graph.getModel().addListener(mxEvent.CHANGE, (sender, event) => { console.log("CHANGE:", sender, event) });
 	    new mxOutline(graph, outline_container);
 
 	    graph.getLabel = (cell) => {
@@ -119,6 +124,13 @@ export default class SHACLEditor extends React.Component {
 		} else {
 		    // adding new shacl class
 		    v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
+		    let vid = v.id;
+		    let rq = `insert data { graph <testdb:shacl-defs> { <testdb:${vid}> rdf:type sh:NodeShape } }`;
+		    console.log(rq)
+		    let edd = new SHACLEditorMod.SUBLDict();
+		    this.fuseki_prx.update(rq, edd).then(() => {
+			console.log("insert done");
+		    });
 		}
 
 		let m = new SHACLClass();
