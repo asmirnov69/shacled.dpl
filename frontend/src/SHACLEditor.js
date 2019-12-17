@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from 'react-dom';
 
-import SHACLClass from './SHACLClass.js';
 import SHACLClassView from './SHACLClassView.js';
 let SHACLEditorMod = window.SHACLEditorMod;
 
@@ -18,15 +17,18 @@ function renderSomething(instance, container) {
   });
 }
 
+function generateQuickGuid() {
+    return Math.random().toString(36).substring(2, 15) +
+        Math.random().toString(36).substring(2, 15);
+}
+
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
 	this.graph = null;
 	this.LoadGraph = this.LoadGraph.bind(this);
-	this.add_shacl_classes = this.add_shacl_classes.bind(this);
+	this.add_shacl_class = this.add_shacl_class.bind(this);
 	this.remove = this.remove.bind(this);
-	this.save = this.save.bind(this);
-	this.load = this.load.bind(this);
 	this.filename = React.createRef();
     }
     
@@ -107,54 +109,33 @@ export default class SHACLEditor extends React.Component {
 	}
     }
 
-    add_shacl_classes(shacl_class_jsons, shacl_class_subclass_links) {
+    add_shacl_class()
+    {
 	console.log("add_shacl_classes");
 	let parent = this.graph.getDefaultParent();
 	this.graph.getModel().beginUpdate();
-	try {
-	    //debugger;
-	    let cells_d = {}
-	    for (let i = 0; i < shacl_class_jsons.length; i++) {
-		let cell_json = shacl_class_jsons[i];
-		var v = null;
-		if (cell_json) {
-		    v = this.graph.insertVertex(parent, null, null, cell_json.cell_geom.x, cell_json.cell_geom.y,
-						cell_json.cell_geom.width, cell_json.cell_geom.height, 'overflow=fill;');
-		    cells_d[cell_json.class_name] = v;
-		} else {
-		    // adding new shacl class
-		    v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
-		    let vid = v.id;
-		    let rq = `insert data { graph <testdb:shacl-defs> { <testdb:${vid}> rdf:type sh:NodeShape } }`;
-		    console.log(rq)
-		    let edd = new SHACLEditorMod.SUBLDict();
-		    this.fuseki_prx.update(rq, edd).then(() => {
-			console.log("insert done");
-		    });
-		}
 
-		let m = new SHACLClass();
-		if (cell_json) {
-		    m.set_from_json(cell_json);
-		}
-		let v_value = <SHACLClassView model={m} el_id={"shacl-" + v.id} graph={this.graph} cell={v}/>;
-		this.graph.model.setValue(v, v_value);
-		let tcell_state = this.graph.view.getState(v, true);
-		tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;
-	    }
-
-	    if (shacl_class_subclass_links) {
-		for (let i = 0; i < shacl_class_subclass_links.length; i++) {
-		    let source_class_name = shacl_class_subclass_links[i][0];
-		    let target_class_name = shacl_class_subclass_links[i][1];
-		    let source_cell = cells_d[source_class_name];
-		    let target_cell = cells_d[target_class_name];
-		    this.graph.insertEdge(parent, null, null, source_cell, target_cell, null);
-		}
-	    }
-	} finally {
-	    this.graph.getModel().endUpdate();
-	}
+	//debugger;
+	// adding new shacl class
+	let v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
+	let vid = "shacl-" + generateQuickGuid();
+	let rq = `
+        insert data { 
+            graph <testdb:shacl-defs> { 
+              <testdb:${vid}> rdf:type sh:NodeShape; sh:targetClass rdf:nil
+            } 
+        }`;
+	console.log(rq);
+	let edd = new SHACLEditorMod.SUBLDict();
+	this.fuseki_prx.update(rq, edd).then(() => {
+	    console.log("insert done");
+	});
+	    
+	let v_value = <SHACLClassView init={true} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
+	this.graph.model.setValue(v, v_value);
+	let tcell_state = this.graph.view.getState(v, true);
+	tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;
+	this.graph.getModel().endUpdate();
     }
 
     remove() {
@@ -163,56 +144,15 @@ export default class SHACLEditor extends React.Component {
 	    let selected_cell = this.graph.getSelectionCell();
 	    this.graph.removeCells([selected_cell]);
 	}
-    }
-    
-    save() {
-	console.log("save", this.filename.current.value);
-	
-	let cells = this.graph.getChildCells(this.graph.getDefaultParent(), true, true);
-	let shacl_subclass_links = [];
-	let shacl_class_jsons = [];
-	for (var i = 0; i < cells.length; i++) {
-	    let cell = cells[i];
-	    if (cell.isEdge()) {
-		let subclass_name = cell.source.value.props.model.class_name;
-		let class_name = cell.target.value.props.model.class_name;
-		shacl_subclass_links.push([subclass_name, class_name])
-	    } else {
-		// cell.value.props.model --> SHACLClass
-		//debugger;
-		let cell_geom = this.graph.model.getGeometry(cell);
-		let cell_geom_json = {x: cell_geom.x, y: cell_geom.y, width: cell_geom.width, height: cell_geom.height};
-		let shacl_class_json = cell.value.props.model.get_json();
-		shacl_class_json.cell_geom = cell_geom_json;
-		shacl_class_jsons.push(shacl_class_json);
-	    }
-	}
+    }    
 
-	let shacl_diagram = {classes: shacl_class_jsons,
-			     class_subclass_links: shacl_subclass_links};
-	let json = JSON.stringify(shacl_diagram);
-	this.prx.saveDia(this.filename.current.value, json).then(() => {
-	    console.log("saved");
-	});
-    }
-
-    load() {
-	this.prx.loadDia(this.filename.current.value).then((json_message) => {
-	    //console.log("load:", json_message, this.filename.current.value);
-	    let j = JSON.parse(json_message);
-	    this.add_shacl_classes(j.classes, j.class_subclass_links);
-	});						     
-    }
-    
     render() {
 	return (<div style={{
 	    display: "grid",
 	    gridTemplateRows: "30px auto"}}
 		>
 		<div>
-		 <button onClick={() => this.add_shacl_classes([null])}>ADD CLASS</button>
-		 <button onClick={this.save}>SAVE</button>
-		 <button onClick={this.load}>LOAD</button>
+		 <button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
 		 <input type="text" defaultValue="" ref={this.filename} onChange={(evt) => this.filename.current.value = evt.target.value}/>
 		 <button onClick={() => this.graph.zoomIn()}>+</button>
 		 <button onClick={() => this.graph.zoomOut()}>-</button>
