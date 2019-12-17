@@ -60,7 +60,7 @@ export default class App extends React.Component {
 		 </TreeView>
 		</div>
 		<div style={{backgroundColor: "cyan"}}>
-		<SHACLEditor/>
+		<SHACLEditor db_uri_scheme="testdb"/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>
 		 <ReactDataSheet

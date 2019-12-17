@@ -22,6 +22,10 @@ function generateQuickGuid() {
         Math.random().toString(36).substring(2, 15);
 }
 
+function get_uri(uri_scheme, s) {
+    return "<" + uri_scheme + ":" + s + ">";
+}
+
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
@@ -29,7 +33,7 @@ export default class SHACLEditor extends React.Component {
 	this.LoadGraph = this.LoadGraph.bind(this);
 	this.add_shacl_class = this.add_shacl_class.bind(this);
 	this.remove = this.remove.bind(this);
-	this.filename = React.createRef();
+	this.new_classname = React.createRef();
     }
     
     shouldComponentUpdate() {
@@ -38,24 +42,19 @@ export default class SHACLEditor extends React.Component {
 
     componentDidMount() {
 	getBackendPort().then((backend_port) => {
-	    let backend_proxy_s = `shacl_editor:ws -h localhost -p ${backend_port}`;
 	    let fuseki_proxy_s = `fuseki:ws -h localhost -p ${backend_port}`;
-	    return Promise.all([window.ic.stringToProxy(backend_proxy_s),
-				window.ic.stringToProxy(fuseki_proxy_s)])
-	}).then(([o_prx, o_fuseki_prx]) => {
-	    return Promise.all(
-		[SHACLEditorMod.SHACLEditorIfcPrx.checkedCast(o_prx),
-		 SHACLEditorMod.FusekiConnectionPrx.checkedCast(o_fuseki_prx)])
-	}).then(([prx, fuseki_prx]) => {
-	    this.prx = prx;
+	    return window.ic.stringToProxy(fuseki_proxy_s);
+	}).then((o_fuseki_prx) => {
+	    return SHACLEditorMod.FusekiConnectionPrx.checkedCast(o_fuseki_prx);
+	}).then((fuseki_prx) => {
 	    this.fuseki_prx = fuseki_prx;
-	    console.log("connected to backend", this.prx, this.fuseki_prx);
+	    console.log("connected to backend", this.fuseki_prx);
 	});
 	this.LoadGraph();
     }
 
     LoadGraph() {
-	debugger;
+	//debugger;
 	// Sets the image to be used for creating new connections
 	mxConnectionHandler.prototype.connectImage = new mxImage('./node_modules/mxgraph/javascript/dist/green-dot.gif', 14, 14);
 	
@@ -111,31 +110,43 @@ export default class SHACLEditor extends React.Component {
 
     add_shacl_class()
     {
-	console.log("add_shacl_classes");
-	let parent = this.graph.getDefaultParent();
-	this.graph.getModel().beginUpdate();
+	let dd = new SHACLEditorMod.SUBLDict();
+	let class_name = this.new_classname.current.value;
+	let new_class_uri = get_uri(this.props.db_uri_scheme, class_name);
+	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
+	console.log("rq:", rq);
+        this.fuseki_prx.select(rq, dd).then((res) => {
+	    debugger;
+	    if (res.get('class_shape').length > 0) {
+		alert("such class is already defined");
+		return;
+	    }
+	
+	    let parent = this.graph.getDefaultParent();
+	    this.graph.getModel().beginUpdate();
 
-	//debugger;
-	// adding new shacl class
-	let v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
-	let vid = "shacl-" + generateQuickGuid();
-	let rq = `
-        insert data { 
-            graph <testdb:shacl-defs> { 
-              <testdb:${vid}> rdf:type sh:NodeShape; sh:targetClass rdf:nil
-            } 
-        }`;
-	console.log(rq);
-	let edd = new SHACLEditorMod.SUBLDict();
-	this.fuseki_prx.update(rq, edd).then(() => {
-	    console.log("insert done");
+	    //debugger;
+	    // adding new shacl class
+	    let v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
+	    let vid = "shacl-" + generateQuickGuid();
+	    let vid_uri = get_uri(this.props.db_uri_scheme, vid);
+	    let rq = `insert data {
+               graph <testdb:shacl-defs> { 
+                  ${vid_uri} rdf:type sh:NodeShape; sh:targetClass ${new_class_uri}
+               }
+            }`;
+
+	    console.log(rq);
+	    this.fuseki_prx.update(rq, dd).then(() => {
+		console.log("insert done");
+	    });
+
+	    let v_value = <SHACLClassView init={true} class_name={class_name} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
+	    this.graph.model.setValue(v, v_value);
+	    let tcell_state = this.graph.view.getState(v, true);
+	    tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;
+	    this.graph.getModel().endUpdate();
 	});
-	    
-	let v_value = <SHACLClassView init={true} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
-	this.graph.model.setValue(v, v_value);
-	let tcell_state = this.graph.view.getState(v, true);
-	tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;
-	this.graph.getModel().endUpdate();
     }
 
     remove() {
@@ -153,7 +164,7 @@ export default class SHACLEditor extends React.Component {
 		>
 		<div>
 		 <button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
-		 <input type="text" defaultValue="" ref={this.filename} onChange={(evt) => this.filename.current.value = evt.target.value}/>
+		 <input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		 <button onClick={() => this.graph.zoomIn()}>+</button>
 		 <button onClick={() => this.graph.zoomOut()}>-</button>
 		 <button onClick={() => this.graph.zoomActual()}>1:1</button>

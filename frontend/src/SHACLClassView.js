@@ -59,12 +59,10 @@ export default class SHACLClassView extends React.Component {
 	super(props);
 	if (this.props.init) {
 	    this.props.init = false;	    
-	    this.props.class_name = null;
 	    this.props.member_views = [];
 	}
 
 	this.del_member_button_enabled = false;
-	this.set_class_name = this.set_class_name.bind(this);
 	this.add_new_member = this.add_new_member.bind(this);
 	this.remove_members_todel = this.remove_members_todel.bind(this);
     }
@@ -110,35 +108,6 @@ export default class SHACLClassView extends React.Component {
 	}
     }
     
-    set_class_name(evt) {
-	console.log("set_class_name:", evt.target.value);
-	this.props.class_name = evt.target.value;
-	let class_name = "<testdb:" + this.props.class_name + ">";
-	
-	let rq = `
-        delete { graph <testdb:shacl-defs> {
-          ?class_shape sh:targetClass ?old_class_name
-         }
-        } insert { graph <testdb:shacl-defs> {
-          ?class_shape sh:targetClass ${class_name}
-         }
-        } where {
-           graph <testdb:shacl-defs> {
-            ?class_shape sh:targetClass ?old_class_name
-           }
-        }
-        `;
-	console.log("rq:", rq);
-	console.log("class_shape:", "testdb:" + this.props.el_id);
-	let edd = new SHACLEditorMod.SUBLDict();
-	let edd_el = new SHACLEditorMod.UBL(SHACLEditorMod.EnumUBLType.U,
-					    "testdb:" + this.props.el_id);
-	edd.set('class_shape', edd_el);
-	this.props.editor.fuseki_prx.update(rq, edd).then(() => {
-	    console.log("updated done");
-	});
-    }
-
     componentDidUpdate() {
 	let dom_el = ReactDOM.findDOMNode(this);
 	var class_ctrl_n = d3.select('#' + dom_el.id + "-class-ctrl").node();
@@ -160,7 +129,7 @@ export default class SHACLClassView extends React.Component {
 		<table id={class_ctrl_id}>
 		<tbody>
 		<tr>
-		<td><input type="text" defaultValue={this.props.class_name} onChange={this.set_class_name}/></td>
+		<td><input type="text" defaultValue={this.props.class_name} readOnly/></td>
 		<td><input type="button" value="+" onClick={this.add_new_member}/></td>
 		<td><button disabled={!this.del_member_button_enabled} onClick={this.remove_members_todel}>-</button></td>
 		</tr>
