@@ -13,6 +13,9 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
 
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 const useStyles = makeStyles({
   root: {
@@ -26,13 +29,18 @@ export default class App extends React.Component {
     constructor(props) {
 	super(props);
 	this.state = {
+	    dialogOpen: false,
 	    grid: [
 		[{value:  1}, {value:  3}],
 		[{value:  2}, {value:  4}]
 	    ]
 	};
     }
-    
+
+    show_dialog() {
+	console.log("show_dialog");
+	this.setState({...this.state, dialogOpen: true});
+    }
     
     render() {
 	const classes = useStyles;
@@ -60,10 +68,14 @@ export default class App extends React.Component {
 		 </TreeView>
 		</div>
 		<div style={{backgroundColor: "cyan"}}>
-		<SHACLEditor db_uri_scheme="testdb"/>
+		<SHACLEditor top_app={this} db_uri_scheme="testdb"/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>
-		 <ReactDataSheet
+		<Button onClick={() => { this.setState({...this.state, dialogOpen: true}); }}>Open dialog</Button>
+		<Dialog onClose={(v) => { this.setState({...this.state, dialogOpen: false}); }} aria-labelledby="simple-dialog-title" open={this.state.dialogOpen}>
+		<DialogTitle>Test123</DialogTitle>
+		</Dialog>
+		<ReactDataSheet
 		  data={this.state.grid}
 		 valueRenderer={(cell) => cell.value}
 		 onCellsChanged={changes => {

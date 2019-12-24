@@ -130,7 +130,7 @@ export default class SHACLClassView extends React.Component {
 		<tbody>
 		<tr>
 		<td><input type="text" defaultValue={this.props.class_name} readOnly/></td>
-		<td><input type="button" value="+" onClick={this.add_new_member}/></td>
+		<td><input type="button" value="+" onClick={()=>this.props.top_app.show_dialog()}/></td>
 		<td><button disabled={!this.del_member_button_enabled} onClick={this.remove_members_todel}>-</button></td>
 		</tr>
 		</tbody>
