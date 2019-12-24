@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 
 import SHACLClassView from './SHACLClassView.js';
 import {getBackendCommunicator} from 'libdipole-js';
-import FusekiPrx from '../gen-js/FusekiPrx.js';
+import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 
 // suggested here: https://github.com/facebook/react/issues/10266#issuecomment-318120709
 function renderSomething(instance, container) {
@@ -43,7 +43,7 @@ export default class SHACLEditor extends React.Component {
 
     componentDidMount() {
 	getBackendCommunicator().then((communicator) => {
-	    this.fuseki_prx = new FusekiPrx(communicator, 'shacl_editor');
+	    this.fuseki_prx = new FusekiConnectionPrx(communicator, 'shacl_editor');
 	});
 	this.LoadGraph();
     }

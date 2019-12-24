@@ -1,7 +1,9 @@
-#import ipdb
-#import fuargs
+import sys, os
 sys.path.append("/home/asmirnov/pyjenautils")
 from pyjenautils import fuseki, jenagraph as j
+
+sys.path.append(os.path.join(os.environ['dipole_topdir'], "src"))
+import libdipole
 
 def to_json_UBL(col_vs):
     ret = []
@@ -34,11 +36,12 @@ def to_UBL_initial_bindins(initialBindings):
     return initial_bindings
 
 @libdipole.exportclass
-class Fuseki:
+class FusekiConnection:
     def __init__(self, fuseki_url):
         self.fuseki_conn = fuseki.FusekiConnection(fuseki_url)
         
     def select(self, rq):
+        print "Fuseki::select:", rq
         rq_res = self.fuseki_conn.select(rq)
         print rq_res
         ret = {}
