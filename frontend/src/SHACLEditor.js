@@ -2,7 +2,8 @@ import React from "react";
 import ReactDOM from 'react-dom';
 
 import SHACLClassView from './SHACLClassView.js';
-let SHACLEditorMod = window.SHACLEditorMod;
+import {getBackendCommunicator} from 'libdipole-js';
+import FusekiPrx from '../gen-js/FusekiPrx.js';
 
 // suggested here: https://github.com/facebook/react/issues/10266#issuecomment-318120709
 function renderSomething(instance, container) {
@@ -41,14 +42,8 @@ export default class SHACLEditor extends React.Component {
     }
 
     componentDidMount() {
-	getBackendPort().then((backend_port) => {
-	    let fuseki_proxy_s = `fuseki:ws -h localhost -p ${backend_port}`;
-	    return window.ic.stringToProxy(fuseki_proxy_s);
-	}).then((o_fuseki_prx) => {
-	    return SHACLEditorMod.FusekiConnectionPrx.checkedCast(o_fuseki_prx);
-	}).then((fuseki_prx) => {
-	    this.fuseki_prx = fuseki_prx;
-	    console.log("connected to backend", this.fuseki_prx);
+	getBackendCommunicator().then((communicator) => {
+	    this.fuseki_prx = new FusekiPrx(communicator, 'shacl_editor');
 	});
 	this.LoadGraph();
     }
@@ -110,14 +105,13 @@ export default class SHACLEditor extends React.Component {
 
     add_shacl_class()
     {
-	let dd = new SHACLEditorMod.SUBLDict();
 	let class_name = this.new_classname.current.value;
 	let new_class_uri = get_uri(this.props.db_uri_scheme, class_name);
 	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
 	console.log("rq:", rq);
-        this.fuseki_prx.select(rq, dd).then((res) => {
+        this.fuseki_prx.select(rq).then((res) => {
 	    debugger;
-	    if (res.get('class_shape').length > 0) {
+	    if (res['class_shape'].length > 0) {
 		alert("such class is already defined");
 		return;
 	    }
@@ -137,7 +131,7 @@ export default class SHACLEditor extends React.Component {
             }`;
 
 	    console.log(rq);
-	    this.fuseki_prx.update(rq, dd).then(() => {
+	    this.fuseki_prx.update(rq).then(() => {
 		console.log("insert done");
 	    });
 
