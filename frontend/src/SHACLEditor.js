@@ -110,7 +110,7 @@ export default class SHACLEditor extends React.Component {
 	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
 	console.log("rq:", rq);
         this.fuseki_prx.select(rq).then((res) => {
-	    debugger;
+	    //debugger;
 	    if (res['class_shape'].length > 0) {
 		alert("such class is already defined");
 		return;

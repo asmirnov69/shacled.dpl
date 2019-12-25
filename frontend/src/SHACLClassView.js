@@ -1,14 +1,16 @@
 import React from "react";
 import ReactDOM from 'react-dom';
 
+function generateQuickGuid() {
+    return Math.random().toString(36).substring(2, 15) +
+        Math.random().toString(36).substring(2, 15);
+}
+
+
 class SHACLClassMemberView extends React.Component {
     constructor(props) {
 	super(props);
-	this.path = null;
-	this.is_object_literal = true;
-	this.object_type = true;
-	this.member_to_del = false;
-	
+	this.state = {path: null, is_object_literal: true, object_type: true, member_to_del: false};
 	this.set_path = this.set_path.bind(this);
 	this.set_object_type = this.set_object_type.bind(this);
 	this.set_is_object_literal = this.set_is_object_literal.bind(this);
@@ -16,37 +18,38 @@ class SHACLClassMemberView extends React.Component {
     }
 
     set_path(evt) {
-	this.path = evt.target.value;
+	this.setState({path: evt.target.value});
     }
 
     set_object_type(evt) {
-	this.object_type = evt.target.value;
+	this.setState({object_type: evt.target.value});
     }	
 
     set_is_object_literal(evt) {
-	this.is_object_literal = evt.target.value === "datatype";
+	this.setState({is_object_literal: evt.target.value === "datatype"});
     }
 
     set_member_to_del(evt) {
-	//debugger;
+	debugger;
 	console.log("set_member_to_del:", evt.target.checked);
-	this.member_to_del = evt.target.checked;
-	this.view.member_del_checkbox_checked_state();
+	this.setState({member_to_del: evt.target.checked}, () => {
+	    this.props.view.member_del_checkbox_checked_state();
+	});
     }
     
     render() {
 	//debugger;
 	return (<tr key={this.props.fbkey}>
-		<td><input type="text" style={{borderWidth: "0px"}} defaultValue={this.path} onChange={this.set_path}/></td>
+		<td><input type="text" style={{borderWidth: "0px"}} value={this.state.path} onChange={this.set_path}/></td>
 		<td>
-		<select defaultValue={this.is_object_literal ? "datatype" : "class"}
+		<select value={this.state.is_object_literal ? "datatype" : "class"}
 		        style={{borderWidth: "0px"}} onChange={this.set_is_object_literal}>
 		<option value="datatype">datatype</option>
 		<option value="class">{"class"}</option>
 		</select>
 		</td>
-		<td><input type="text" style={{borderWidth: "0px"}} defaultValue={this.object_type} onChange={this.set_object_type}/></td>
-		<td><input type="checkbox" onChange={this.set_member_to_del}/></td>
+		<td><input type="text" style={{borderWidth: "0px"}} value={this.state.object_type} onChange={this.set_object_type}/></td>
+		<td><input type="checkbox" value={this.state.member_to_del} onChange={this.set_member_to_del}/></td>
 		</tr>);
     }
 };
@@ -54,55 +57,53 @@ class SHACLClassMemberView extends React.Component {
 export default class SHACLClassView extends React.Component {
     constructor(props) {
 	super(props);
-	this.member_views = [];
-
-	this.del_member_button_enabled = false;
+	this.state = {member_views: [], del_member_button_enabled: false};
 	this.add_new_member = this.add_new_member.bind(this);
 	this.remove_members_todel = this.remove_members_todel.bind(this);
     }
 
-    //shouldComponentUpdate() {
-    //return false;
-    //}
-    
     add_new_member() {
 	//debugger;
-	let new_member_view = <SHACLClassMemberView key={this.member_views.length} fbkey={this.member_views.length} view={this}/>;
-	this.member_views.push(new_member_view);
-	this.forceUpdate();
+	let new_ref = React.createRef();
+	//let new_key = this.state.member_views.length; // -- this choice of key causes wrong behaviour
+	let new_key = generateQuickGuid();
+	let new_member_view = <SHACLClassMemberView ref={new_ref} key={new_key} fbkey={new_key} view={this}/>;
+	let member_views = this.state.member_views;
+	member_views.push([new_member_view, new_ref]);
+	this.setState({member_views: member_views});
     }
 
     member_del_checkbox_checked_state() {
 	//debugger;
-	this.del_member_button_enabled = false;
-	for (let i = 0; i < this.member_views.length; i++) {
-	    let member_view = this.member_views[i];
-	    let ff = member_view.member_to_del;
+	let del_member_button_enabled = false;
+	for (let i = 0; i < this.state.member_views.length; i++) {
+	    let member_view_ref = this.state.member_views[i][1];
+	    let ff = member_view_ref.current.state.member_to_del;
 	    if (ff) {
-		this.del_member_button_enabled = true;
+		del_member_button_enabled = true;
 		break;
 	    }
 	}
-	this.forceUpdate();
+	this.setState({del_member_button_enabled: del_member_button_enabled});
     }
 
     remove_members_todel() {
-	//debugger;
 	let todel_indexes = [];
-	for (let i = 0; i < this.member_views.length; i++) {
-	    let member_view = this.member_views[i];
-	    let ff = member_view.member_to_del;
+	for (let i = 0; i < this.state.member_views.length; i++) {
+	    let member_view = this.state.member_views[i][1];
+	    let ff = member_view.current.state.member_to_del;
 	    if (ff) {
 		todel_indexes.push(i);
 	    }
 	}
-	
+
+	//debugger;
+	let member_views = this.state.member_views;
 	if (todel_indexes.length > 0) {
 	    for (let ii = todel_indexes.length - 1; ii >= 0; ii--) {
-		this.member_views.splice(todel_indexes[ii], 1);
+		member_views.splice(todel_indexes[ii], 1);
 	    }
-	    //this.forceUpdate();
-	    this.member_del_checkbox_checked_state();
+	    this.setState({member_views: member_views}, () => this.member_del_checkbox_checked_state());
 	}
     }
     
@@ -130,14 +131,14 @@ export default class SHACLClassView extends React.Component {
 		<td><input type="text" defaultValue={this.props.class_name} readOnly/></td>
 		<td><input type="button" value="+" onClick={()=>this.add_new_member()}/></td>
 		<td><input type="button" value="++" onClick={()=>this.props.top_app.class_editor_dialog_ref.current.show_dialog(this.props.class_name)}/></td>
-		<td><button disabled={!this.del_member_button_enabled} onClick={this.remove_members_todel}>-</button></td>
+		<td><button disabled={!this.state.del_member_button_enabled} onClick={this.remove_members_todel}>-</button></td>
 		</tr>
 		</tbody>
 		</table>
 
 		<table id={members_ctrl_id} style={{borderSpacing: "0px", borderCollapse: "collapse"}}>
 		<tbody>
-		 {this.member_views}
+		{this.state.member_views.map((x) => x[0])}
 	        </tbody>
 		</table>
 	     </div>
