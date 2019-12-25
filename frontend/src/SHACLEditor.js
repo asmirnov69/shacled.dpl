@@ -135,7 +135,7 @@ export default class SHACLEditor extends React.Component {
 		console.log("insert done");
 	    });
 
-	    let v_value = <SHACLClassView init={true} top_app={this.props.top_app} class_name={class_name} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
+	    let v_value = <SHACLClassView top_app={this.props.top_app} class_name={class_name} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
 	    this.graph.model.setValue(v, v_value);
 	    let tcell_state = this.graph.view.getState(v, true);
 	    tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;
@@ -158,7 +158,7 @@ export default class SHACLEditor extends React.Component {
 		>
 		<div>
 		<button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
-		<button onClick={() => this.props.top_app.show_dialog()}>SHOW DIALOG</button>
+		<button onClick={() => this.props.top_app.show_dialog("")}>SHOW DIALOG</button>
 		 <input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		 <button onClick={() => this.graph.zoomIn()}>+</button>
 		 <button onClick={() => this.graph.zoomOut()}>-</button>

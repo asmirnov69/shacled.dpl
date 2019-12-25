@@ -30,6 +30,7 @@ export default class App extends React.Component {
 	super(props);
 	this.state = {
 	    dialogOpen: false,
+	    dialog_title: "",
 	    grid: [
 		[{value:  1}, {value:  3}],
 		[{value:  2}, {value:  4}]
@@ -37,9 +38,9 @@ export default class App extends React.Component {
 	};
     }
 
-    show_dialog() {
+    show_dialog(dialog_title) {
 	console.log("show_dialog");
-	this.setState({...this.state, dialogOpen: true});
+	this.setState({...this.state, dialogOpen: true, dialog_title: dialog_title});
     }
     
     render() {
@@ -73,7 +74,7 @@ export default class App extends React.Component {
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>
 		<Button onClick={() => { this.setState({...this.state, dialogOpen: true}); }}>Open dialog</Button>
 		<Dialog onClose={(v) => { this.setState({...this.state, dialogOpen: false}); }} aria-labelledby="simple-dialog-title" open={this.state.dialogOpen}>
-		<DialogTitle>Test123</DialogTitle>
+		<DialogTitle>Test123 {this.state.dialog_title}</DialogTitle>
 		</Dialog>
 		<ReactDataSheet
 		  data={this.state.grid}
