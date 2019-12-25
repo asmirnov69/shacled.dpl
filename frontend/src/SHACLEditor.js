@@ -10,7 +10,7 @@ function renderSomething(instance, container) {
   return new Promise((resolve, reject) => {
     try {
       ReactDOM.render(instance, container, function () {
-        resolve(this);
+        resolve();
       });
     } catch (e) {
       reject(e);
@@ -158,7 +158,6 @@ export default class SHACLEditor extends React.Component {
 		>
 		<div>
 		<button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
-		<button onClick={() => this.props.top_app.show_dialog("")}>SHOW DIALOG</button>
 		 <input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		 <button onClick={() => this.graph.zoomIn()}>+</button>
 		 <button onClick={() => this.graph.zoomOut()}>-</button>

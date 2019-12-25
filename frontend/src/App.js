@@ -1,5 +1,6 @@
 import React from "react";
 import SHACLEditor from './SHACLEditor.js';
+import SHACLClassEditorDialog from './SHACLClassEditorDialog.js';
 import ReactDataSheet from 'react-datasheet';
 
 //
@@ -13,10 +14,6 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeItem from '@material-ui/lab/TreeItem';
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-
 const useStyles = makeStyles({
   root: {
     height: 216,
@@ -28,9 +25,9 @@ const useStyles = makeStyles({
 export default class App extends React.Component {
     constructor(props) {
 	super(props);
+	this.class_editor_dialog_ref = React.createRef();
 	this.state = {
-	    dialogOpen: false,
-	    dialog_title: "",
+	    classEditorDialogOpen: false,
 	    grid: [
 		[{value:  1}, {value:  3}],
 		[{value:  2}, {value:  4}]
@@ -38,11 +35,6 @@ export default class App extends React.Component {
 	};
     }
 
-    show_dialog(dialog_title) {
-	console.log("show_dialog");
-	this.setState({...this.state, dialogOpen: true, dialog_title: dialog_title});
-    }
-    
     render() {
 	const classes = useStyles;
 	return (<div style={{display: "grid", width: "100%", height: "100%",
@@ -70,12 +62,9 @@ export default class App extends React.Component {
 		</div>
 		<div style={{backgroundColor: "cyan"}}>
 		<SHACLEditor top_app={this} db_uri_scheme="testdb"/>
+		<SHACLClassEditorDialog ref={this.class_editor_dialog_ref}/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>
-		<Button onClick={() => { this.setState({...this.state, dialogOpen: true}); }}>Open dialog</Button>
-		<Dialog onClose={(v) => { this.setState({...this.state, dialogOpen: false}); }} aria-labelledby="simple-dialog-title" open={this.state.dialogOpen}>
-		<DialogTitle>Test123 {this.state.dialog_title}</DialogTitle>
-		</Dialog>
 		<ReactDataSheet
 		  data={this.state.grid}
 		 valueRenderer={(cell) => cell.value}
