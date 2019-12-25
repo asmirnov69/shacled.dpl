@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from 'react-dom';
+import * as utils from './utils.js';
 
 import SHACLClassView from './SHACLClassView.js';
 import {getBackendCommunicator} from 'libdipole-js';
@@ -16,15 +17,6 @@ function renderSomething(instance, container) {
       reject(e);
     }
   });
-}
-
-function generateQuickGuid() {
-    return Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15);
-}
-
-function get_uri(uri_scheme, s) {
-    return "<" + uri_scheme + ":" + s + ">";
 }
 
 export default class SHACLEditor extends React.Component {
@@ -106,7 +98,7 @@ export default class SHACLEditor extends React.Component {
     add_shacl_class()
     {
 	let class_name = this.new_classname.current.value;
-	let new_class_uri = get_uri(this.props.db_uri_scheme, class_name);
+	let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
 	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
 	console.log("rq:", rq);
         this.fuseki_prx.select(rq).then((res) => {
@@ -122,8 +114,8 @@ export default class SHACLEditor extends React.Component {
 	    //debugger;
 	    // adding new shacl class
 	    let v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
-	    let vid = "shacl-" + generateQuickGuid();
-	    let vid_uri = get_uri(this.props.db_uri_scheme, vid);
+	    let vid = "shacl-" + utils.generateQuickGuid();
+	    let vid_uri = utils.get_uri(this.props.db_uri_scheme, vid);
 	    let rq = `insert data {
                graph <testdb:shacl-defs> { 
                   ${vid_uri} rdf:type sh:NodeShape; sh:targetClass ${new_class_uri}

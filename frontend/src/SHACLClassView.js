@@ -1,11 +1,6 @@
 import React from "react";
 import ReactDOM from 'react-dom';
-
-function generateQuickGuid() {
-    return Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15);
-}
-
+import * as utils from './utils.js';
 
 class SHACLClassMemberView extends React.Component {
     constructor(props) {
@@ -66,7 +61,7 @@ export default class SHACLClassView extends React.Component {
 	//debugger;
 	let new_ref = React.createRef();
 	//let new_key = this.state.member_views.length; // -- this choice of key causes wrong behaviour
-	let new_key = generateQuickGuid();
+	let new_key = utils.generateQuickGuid();
 	let new_member_view = <SHACLClassMemberView ref={new_ref} key={new_key} fbkey={new_key} view={this}/>;
 	let member_views = this.state.member_views;
 	member_views.push([new_member_view, new_ref]);
