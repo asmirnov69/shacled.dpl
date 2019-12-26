@@ -52,27 +52,32 @@ export default class Diagram extends React.Component {
 	    graph.getLabel = this.generate_cell_conect.bind(this);
 	}
     }
+
+    get_cell_geometry(cell) {
+	var class_ctrl_n = d3.select('#' + cell.value.props.el_id + "-class-ctrl").node();
+	var members_ctrl_n = d3.select('#' + cell.value.props.el_id + "-members-ctrl").node();
+	var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
+	var members_ctrl_n_bb = members_ctrl_n.getBoundingClientRect();
+	var g = cell.getGeometry().clone();
+	g.width = Math.max(class_ctrl_n_bb.width, members_ctrl_n_bb.width) + 10;
+	g.height = class_ctrl_n_bb.height + members_ctrl_n_bb.height + 10;
+	return g;
+    }
     
     generate_cell_conect(cell) {
 	if (!cell.isEdge()) {
-	    console.log("generate_cell_conect", cell);
+	    //console.log("generate_cell_conect", cell);
 	    //debugger;
 	    var el = document.getElementById(cell.value.props.el_id + "top");
 	    if (!el) {
 		el = document.createElement("div");		    
 		el.setAttribute("id", cell.value.props.el_id + "top");
 		renderSomething(cell.value, el).then(() => {
-		    console.log("renderSomething.then", cell);
+		    //console.log("renderSomething.then", cell);
 		    //debugger;
-		    var class_ctrl_n = d3.select('#' + cell.value.props.el_id + "-class-ctrl").node();
-		    var members_ctrl_n = d3.select('#' + cell.value.props.el_id + "-members-ctrl").node();
-		    var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
-		    var members_ctrl_n_bb = members_ctrl_n.getBoundingClientRect();
-		    var g = cell.getGeometry().clone();
-		    g.width = Math.max(class_ctrl_n_bb.width, members_ctrl_n_bb.width) + 10;
-		    g.height = class_ctrl_n_bb.height + members_ctrl_n_bb.height + 10;
+		    let g = this.get_cell_geometry(cell);
 		    this.graph.resizeCell(cell, g);
-		    console.log("renderSomething exit", cell);
+		    //console.log("renderSomething exit", cell);
 		});
 		
 		//debugger;
@@ -103,7 +108,8 @@ export default class Diagram extends React.Component {
 	tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;		
     }
 
-    resize_cell(cell, g) {
+    resize_cell(cell) {
+	let g = this.get_cell_geometry(cell);
 	this.graph.resizeCell(cell, g);
     }
     
