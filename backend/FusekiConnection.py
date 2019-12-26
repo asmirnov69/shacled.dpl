@@ -43,11 +43,14 @@ class FusekiConnection:
     def select(self, rq):
         print "Fuseki::select:", rq
         rq_res = self.fuseki_conn.select(rq)
-        print rq_res
+        print "Fuseki::select res:", rq_res
         ret = {}
         for col in rq_res.columns:
             ret[col] = to_json_UBL(rq_res.loc[:, col])
         return ret
 
     def update(self, rq):
+        print "Fuseki::update:", rq
         self.fuseki_conn.update(rq)
+        print "DONE Fuseki::update:", rq
+        
