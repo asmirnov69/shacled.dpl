@@ -22,10 +22,12 @@ function renderSomething(instance, container) {
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
+	this.fuseki_prx = null;
 	this.graph = null;
 	this.LoadGraph = this.LoadGraph.bind(this);
 	this.add_shacl_class = this.add_shacl_class.bind(this);
-	this.remove = this.remove.bind(this);
+	this.load_all_classes = this.load_all_classes.bind(this);
+	this.remove = this.remove.bind(this);	
 	this.new_classname = React.createRef();
     }
     
@@ -95,8 +97,7 @@ export default class SHACLEditor extends React.Component {
 	}
     }
 
-    add_shacl_class()
-    {
+    add_shacl_class() {
 	let class_name = this.new_classname.current.value;
 	let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
 	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
@@ -135,6 +136,25 @@ export default class SHACLEditor extends React.Component {
 	});
     }
 
+    load_all_classes(db_uri_scheme) {
+	let rq = "select ?class_uri { ?class_uri rdf:type rdfs:Class }";
+	this.fuseki_prx.select(rq).then((rq_res) => {
+	    console.log("classes: ", rq_res.class_uri.map(x=>x.resource));
+	    let class_uris = rq_res.class_uri.map(x=>x.resource);
+	    let parent = this.graph.getDefaultParent();	    
+	    this.graph.getModel().beginUpdate();
+	    class_uris.forEach((class_uri) => {
+		let v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
+		let vid = "shacl-" + utils.generateQuickGuid();
+		let v_value = <SHACLClassView top_app={this.props.top_app} class_name={class_uri} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
+		this.graph.model.setValue(v, v_value);
+		let tcell_state = this.graph.view.getState(v, true);
+		tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;		
+	    });
+	    this.graph.getModel().endUpdate();
+	});
+    }
+    
     remove() {
 	console.log("remove", this.graph.getSelectionCount());
 	if (this.graph.getSelectionCount() == 1) {
@@ -149,6 +169,7 @@ export default class SHACLEditor extends React.Component {
 	    gridTemplateRows: "30px auto"}}
 		>
 		<div>
+		<button onClick={() => this.load_all_classes("testdb")}>LOAD testdb</button>
 		<button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
 		 <input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		 <button onClick={() => this.graph.zoomIn()}>+</button>
