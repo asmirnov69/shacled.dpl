@@ -103,15 +103,20 @@ export default class SHACLClassView extends React.Component {
     }
     
     componentDidUpdate() {
+	// calculate size of component
 	let dom_el = ReactDOM.findDOMNode(this);
 	var class_ctrl_n = d3.select('#' + dom_el.id + "-class-ctrl").node();
 	var members_ctrl_n = d3.select('#' + dom_el.id + "-members-ctrl").node();
 	var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
 	var members_ctrl_n_bb = members_ctrl_n.getBoundingClientRect();
+
+	// creating new geometry for cell holding component content
 	var g = this.props.cell.getGeometry().clone();
 	g.width = Math.max(class_ctrl_n_bb.width, members_ctrl_n_bb.width) + 10;
 	g.height = class_ctrl_n_bb.height + members_ctrl_n_bb.height + 10;
-	this.props.graph.resizeCell(this.props.cell, g);
+
+	// actual resize is done by diagram
+	this.props.diagram.resize_cell(this.props.cell, g);
     }
     
     render() {

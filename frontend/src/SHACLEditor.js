@@ -2,29 +2,16 @@ import React from "react";
 import ReactDOM from 'react-dom';
 import * as utils from './utils.js';
 
+import Diagram from './Diagram.js';
 import SHACLClassView from './SHACLClassView.js';
 import {getBackendCommunicator} from 'libdipole-js';
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
-
-// suggested here: https://github.com/facebook/react/issues/10266#issuecomment-318120709
-function renderSomething(instance, container) {
-  return new Promise((resolve, reject) => {
-    try {
-      ReactDOM.render(instance, container, function () {
-        resolve();
-      });
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
 	this.fuseki_prx = null;
-	this.graph = null;
-	this.LoadGraph = this.LoadGraph.bind(this);
+	this.diagram = React.createRef();
 	this.add_shacl_class = this.add_shacl_class.bind(this);
 	this.load_all_classes = this.load_all_classes.bind(this);
 	this.remove = this.remove.bind(this);	
@@ -39,62 +26,6 @@ export default class SHACLEditor extends React.Component {
 	getBackendCommunicator().then((communicator) => {
 	    this.fuseki_prx = new FusekiConnectionPrx(communicator, 'shacl_editor');
 	});
-	this.LoadGraph();
-    }
-
-    LoadGraph() {
-	//debugger;
-	// Sets the image to be used for creating new connections
-	mxConnectionHandler.prototype.connectImage = new mxImage('./node_modules/mxgraph/javascript/dist/green-dot.gif', 14, 14);
-	
-	if (!mxClient.isBrowserSupported()) {
-	    mxUtils.error('Browser is not supported!', 200, false);
-	} else {
-	    //mxClient.link('stylesheet', './common.css');
-	    var container = d3.select('#graphContainer').node();
-	    var outline_container = d3.select('#graphOutlineContainer').node();
-	    this.graph = new mxGraph(container);
-	    var graph = this.graph;
-	    graph.setHtmlLabels(true);
-	    graph.setConnectable(true);
-	    graph.setCellsDisconnectable(false);
-	    graph.setCellsCloneable(false);
-	    graph.setAutoSizeCells(true);
-	    //graph.getModel().addListener(mxEvent.CHANGE, (sender, event) => { console.log("CHANGE:", sender, event) });
-	    new mxOutline(graph, outline_container);
-
-	    graph.getLabel = (cell) => {
-		if (!cell.isEdge()) {
-		    //console.log("getLabel", cell);
-		    //debugger;
-		    var el = document.getElementById(cell.value.props.el_id + "top");
-		    if (!el) {
-			el = document.createElement("div");		    
-			el.setAttribute("id", cell.value.props.el_id + "top");
-			renderSomething(cell.value, el).then(() => {
-			    //console.log("renderSomething", cell);
-			    //debugger;
-			    var class_ctrl_n = d3.select('#' + cell.value.props.el_id + "-class-ctrl").node();
-			    var members_ctrl_n = d3.select('#' + cell.value.props.el_id + "-members-ctrl").node();
-			    var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
-			    var members_ctrl_n_bb = members_ctrl_n.getBoundingClientRect();
-			    var g = cell.getGeometry().clone();
-			    g.width = Math.max(class_ctrl_n_bb.width, members_ctrl_n_bb.width) + 10;
-			    g.height = class_ctrl_n_bb.height + members_ctrl_n_bb.height + 10;
-			    this.graph.resizeCell(cell, g);
-			    //console.log("renderSomething exit", cell);
-			});
-			
-			//debugger;
-			//console.log("getLabel exit", cell);
-		    } else {
-			//console.log("getLabel empty exit");
-		    }
-		    return el;
-		}
-		return "rdfs:subClassOf";
-	    };
-	}
     }
 
     add_shacl_class() {
@@ -108,31 +39,22 @@ export default class SHACLEditor extends React.Component {
 		alert("such class is already defined");
 		return;
 	    }
-	
-	    let parent = this.graph.getDefaultParent();
-	    this.graph.getModel().beginUpdate();
 
-	    //debugger;
-	    // adding new shacl class
-	    let v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
-	    let vid = "shacl-" + utils.generateQuickGuid();
-	    let vid_uri = utils.get_uri(this.props.db_uri_scheme, vid);
+	    let random_uri = utils.get_uri(this.props.db_uri_scheme, utils.generateQuickGuid());
 	    let rq = `insert data {
                graph <testdb:shacl-defs> { 
-                  ${vid_uri} rdf:type sh:NodeShape; sh:targetClass ${new_class_uri}
+                  ${random_uri} rdf:type sh:NodeShape; sh:targetClass ${new_class_uri}
                }
             }`;
 
 	    console.log(rq);
 	    this.fuseki_prx.update(rq).then(() => {
 		console.log("insert done");
+		let v_value = <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_name} el_id={"shacl-" + utils.generateQuickGuid()}/>;
+		this.diagram.current.begin_update();
+		this.diagram.current.add_cell(v_value);
+		this.diagram.current.end_update();
 	    });
-
-	    let v_value = <SHACLClassView top_app={this.props.top_app} class_name={class_name} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
-	    this.graph.model.setValue(v, v_value);
-	    let tcell_state = this.graph.view.getState(v, true);
-	    tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;
-	    this.graph.getModel().endUpdate();
 	});
     }
 
@@ -141,17 +63,12 @@ export default class SHACLEditor extends React.Component {
 	this.fuseki_prx.select(rq).then((rq_res) => {
 	    console.log("classes: ", rq_res.class_uri.map(x=>x.resource));
 	    let class_uris = rq_res.class_uri.map(x=>x.resource);
-	    let parent = this.graph.getDefaultParent();	    
-	    this.graph.getModel().beginUpdate();
+	    this.diagram.current.begin_update();
 	    class_uris.forEach((class_uri) => {
-		let v = this.graph.insertVertex(parent, null, null, 100, 60, 120, 80, 'overflow=fill;');
-		let vid = "shacl-" + utils.generateQuickGuid();
-		let v_value = <SHACLClassView top_app={this.props.top_app} class_name={class_uri} el_id={vid} graph={this.graph} cell={v} editor={this}/>;
-		this.graph.model.setValue(v, v_value);
-		let tcell_state = this.graph.view.getState(v, true);
-		tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;		
+		let v_value = <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} el_id={"shacl-" + utils.generateQuickGuid()}/>;
+		this.diagram.current.add_cell(v_value);
 	    });
-	    this.graph.getModel().endUpdate();
+	    this.diagram.current.end_update();
 	});
     }
     
@@ -164,23 +81,12 @@ export default class SHACLEditor extends React.Component {
     }    
 
     render() {
-	return (<div style={{
-	    display: "grid",
-	    gridTemplateRows: "30px auto"}}
-		>
-		<div>
+	return (<div style={{display: "grid",gridTemplateRows: "30px auto"}}>
 		<button onClick={() => this.load_all_classes("testdb")}>LOAD testdb</button>
 		<button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
-		 <input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
-		 <button onClick={() => this.graph.zoomIn()}>+</button>
-		 <button onClick={() => this.graph.zoomOut()}>-</button>
-		 <button onClick={() => this.graph.zoomActual()}>1:1</button>
-		 <button onClick={() => this.remove()}>DEL</button>
-		</div>
-		<div id="graphContainer" style={{overflow:'hidden'}}>
-		</div>
-		<div id="graphOutlineContainer" style={{zIndex:"1",position:"absolute",overflow:"hidden",top:"0px",right:"0px",width:"320px",height:"120px",background:"transparent",borderStyle:"solid",borderColor:"lightgray"}}>
-		</div>
+		<input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
+		<button onClick={() => this.remove()}>DEL</button>
+		<Diagram ref={this.diagram}/>
 	        </div>);
     }
 };
