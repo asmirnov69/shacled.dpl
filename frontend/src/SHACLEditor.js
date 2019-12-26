@@ -43,8 +43,10 @@ export default class SHACLEditor extends React.Component {
 	    let random_uri = utils.get_uri(this.props.db_uri_scheme, utils.generateQuickGuid());
 	    let rq = `insert data {
                graph <testdb:shacl-defs> { 
-                  ${random_uri} rdf:type sh:NodeShape; sh:targetClass ${new_class_uri}
+                  ${random_uri} rdf:type sh:NodeShape; sh:targetClass ${new_class_uri}.
+                  ${new_class_uri} rdf:type rdfs:Class.
                }
+               ${new_class_uri} rdf:type rdfs:Class.
             }`;
 
 	    console.log(rq);
@@ -71,6 +73,10 @@ export default class SHACLEditor extends React.Component {
 	    this.diagram.current.end_update();
 	});
     }
+
+    apply_layout() {
+	this.diagram.current.apply_layout();
+    }
     
     remove() {
 	console.log("remove", this.graph.getSelectionCount());
@@ -81,9 +87,10 @@ export default class SHACLEditor extends React.Component {
     }    
 
     render() {
-	return (<div style={{display: "grid",gridTemplateRows: "30px auto"}}>
+	return (<div>
 		<button onClick={() => this.load_all_classes("testdb")}>LOAD testdb</button>
 		<button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
+		<button onClick={() => this.apply_layout()}>layout</button>
 		<input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		<button onClick={() => this.remove()}>DEL</button>
 		<Diagram ref={this.diagram}/>

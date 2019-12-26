@@ -112,6 +112,13 @@ export default class Diagram extends React.Component {
 	let g = this.get_cell_geometry(cell);
 	this.graph.resizeCell(cell, g);
     }
+
+    apply_layout() {
+	let layout = new mxHierarchicalLayout(this.graph, mxConstants.DIRECTION_SOUTH);
+	this.graph.getModel().beginUpdate();
+	layout.execute(this.graph.getDefaultParent());
+	this.graph.getModel().endUpdate();
+    }
     
     render() {
 	return (<div style={{display: "grid", gridTemplateRows: "30px auto"}}>
