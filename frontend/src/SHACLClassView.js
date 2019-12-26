@@ -25,7 +25,7 @@ class SHACLClassMemberView extends React.Component {
     }
 
     set_member_to_del(evt) {
-	debugger;
+	//debugger;
 	console.log("set_member_to_del:", evt.target.checked);
 	this.setState({member_to_del: evt.target.checked}, () => {
 	    this.props.view.member_del_checkbox_checked_state();
