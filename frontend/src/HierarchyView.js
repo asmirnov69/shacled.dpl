@@ -31,7 +31,7 @@ class HierarchyView extends React.Component {
     }
 
     componentDidMount() {
-	//this.refresh()
+	this.refresh()
     }
     
     refresh() {
