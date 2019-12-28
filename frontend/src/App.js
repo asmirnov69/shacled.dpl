@@ -22,10 +22,10 @@ export default class App extends React.Component {
 			     gridTemplateColumns: "180px auto",
 			     gridTemplateRows: "auto 200px"}}>
 		<div>
-		  <HierarchyView top_app={this}/>
+		 <HierarchyView communicator={this.props.communicator} top_app={this}/>
 		</div>
 		<div style={{backgroundColor: "cyan"}}>
-		<SHACLEditor top_app={this} db_uri_scheme="testdb"/>
+		<SHACLEditor communicator={this.props.communicator} top_app={this} db_uri_scheme="testdb"/>
 		<SHACLClassEditorDialog ref={this.class_editor_dialog_ref}/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>

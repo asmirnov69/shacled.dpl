@@ -4,13 +4,12 @@ import * as utils from './utils.js';
 
 import Diagram from './Diagram.js';
 import SHACLClassView from './SHACLClassView.js';
-import {getBackendCommunicator} from 'libdipole-js';
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
-	this.fuseki_prx = null;
+	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 	this.diagram = React.createRef();
 	this.add_shacl_class = this.add_shacl_class.bind(this);
 	this.load_all_classes = this.load_all_classes.bind(this);
@@ -20,12 +19,6 @@ export default class SHACLEditor extends React.Component {
     
     shouldComponentUpdate() {
         return false;
-    }
-
-    componentDidMount() {
-	getBackendCommunicator().then((communicator) => {
-	    this.fuseki_prx = new FusekiConnectionPrx(communicator, 'shacl_editor');
-	});
     }
 
     add_shacl_class() {
