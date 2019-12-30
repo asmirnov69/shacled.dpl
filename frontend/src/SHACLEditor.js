@@ -26,9 +26,10 @@ export default class SHACLEditor extends React.Component {
 	let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
 	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
 	console.log("rq:", rq);
-        this.fuseki_prx.select(rq).then((res) => {
+        this.fuseki_prx.select(rq).then((rq_res) => {
+	    let df = utils.to_n3_rows(rq_res)
 	    //debugger;
-	    if (res['class_shape'].length > 0) {
+	    if (df.length > 0) {
 		alert("such class is already defined");
 		return;
 	    }
@@ -55,12 +56,13 @@ export default class SHACLEditor extends React.Component {
 
     load_all_classes(db_uri_scheme) {
 	let rq = "select ?class_uri { ?class_uri rdf:type rdfs:Class }";
-	this.fuseki_prx.select(rq).then((rq_res) => {
-	    console.log("classes: ", rq_res.class_uri.map(x=>x.resource));
-	    let class_uris = rq_res.class_uri.map(x=>x.resource);
+	this.fuseki_prx.select(rq).then((rq_res_) => {
+	    let rq_res = utils.to_n3_rows(rq_res_);
+	    console.log("classes: ", rq_res.map(x=>x.class_uri.value));
+	    let class_uris = rq_res.map(x=>x.class_uri);
 	    this.diagram.current.begin_update();
 	    class_uris.forEach((class_uri) => {
-		let v_value = <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} el_id={"shacl-" + utils.generateQuickGuid()}/>;
+		let v_value = <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri.value} el_id={"shacl-" + utils.generateQuickGuid()}/>;
 		this.diagram.current.add_cell(v_value);
 	    });
 	    this.diagram.current.end_update();

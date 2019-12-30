@@ -2,6 +2,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import babel from 'rollup-plugin-babel';
 import replace from 'rollup-plugin-replace';
+import builtins from 'rollup-plugin-node-builtins';
 
 // `npm run build` -> `production` is true
 // `npm run dev` -> `production` is false
@@ -15,6 +16,7 @@ export default {
 	sourcemap: true,
     },
     plugins: [
+	builtins({preferBuiltins: true}),
 	babel({babelrc: false, presets: ['@babel/react']}),
 	replace({'process.env.NODE_ENV': JSON.stringify('production'),}), // to fix react imports
 	resolve(), // tells Rollup how to find date-fns in node_modules

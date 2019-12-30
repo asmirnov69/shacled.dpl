@@ -1,4 +1,5 @@
 import React from "react";
+import * as n3 from 'n3';
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 import * as utils from './utils.js';
 
@@ -6,6 +7,10 @@ import * as utils from './utils.js';
 // treeview example
 // https://material-ui.com/components/tree-view/
 // https://github.com/mui-org/material-ui/blob/master/docs/src/pages/components/tree-view/FileSystemNavigator.js
+//
+
+// checkboxes example:
+// https://github.com/mui-org/material-ui/issues/17407
 //
 import { makeStyles } from '@material-ui/core/styles';
 import TreeView from '@material-ui/lab/TreeView';
@@ -42,30 +47,21 @@ class HierarchyView extends React.Component {
         }
         `;
 
-	this.fuseki_prx.select(rq).then((df) => {
-	    let tree_leaves = this.build_tree(df, 'testdb:Security');
+	this.fuseki_prx.select(rq).then((rq_res) => {
+	    let df = utils.to_n3_rows(rq_res);
+	    let tree_leaves = this.build_tree(df, n3.DataFactory.namedNode('testdb:Security'));
 	    console.log("tree_leaves: ", tree_leaves);
 	    this.setState({tree_leaves: tree_leaves});
 	});
     }
 
     build_tree(df, superclass_uri) {
-	//let links = df.filter((x) => x.superclass_uri === superclass_uri);
-	let links = [];
-	for (let i = 0; i < df['superclass_uri'].length; i++) {
-	    if (df['superclass_uri'][i].resource === superclass_uri) {
-		links.push({superclass_uri: df['superclass_uri'][i].resource,
-			    subclass_uri: df['subclass_uri'][i].resource});
-	    }
-	}
-	let child_elements = [];
-	for (let i = 0; i < links.length; i++) {
-	    child_elements.push(this.build_tree(df, links[i].subclass_uri));
-	}
-	let new_id = utils.generateQuickGuid();
-	let new_leave = React.createElement(TreeItem,
-					    {nodeId: new_id, label: superclass_uri},
-					    child_elements.length > 0 ? child_elements : null
+	debugger;
+	let links = df.filter((x) => x.superclass_uri.value === superclass_uri.value);
+	let child_elements = links.map((x) => this.build_tree(df, x.subclass_uri));
+	let new_leave = React.createElement(TreeItem, {nodeId: utils.generateQuickGuid(),
+						       label: superclass_uri.value},
+					    child_elements
 					   );
 	return new_leave;
     }
