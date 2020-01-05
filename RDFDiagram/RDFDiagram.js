@@ -54,13 +54,11 @@ export default class RDFDiagram extends React.Component {
     }
 
     get_cell_geometry(cell) {
-	var class_ctrl_n = d3.select('#' + cell.value.props.el_id + "-class-ctrl").node();
-	var members_ctrl_n = d3.select('#' + cell.value.props.el_id + "-members-ctrl").node();
+	var class_ctrl_n = d3.select('#' + cell.value.props.el_id + "top").node();
 	var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
-	var members_ctrl_n_bb = members_ctrl_n.getBoundingClientRect();
 	var g = cell.getGeometry().clone();
-	g.width = Math.max(class_ctrl_n_bb.width, members_ctrl_n_bb.width) + 10;
-	g.height = class_ctrl_n_bb.height + members_ctrl_n_bb.height + 10;
+	g.width = class_ctrl_n_bb.width + 10;
+	g.height = class_ctrl_n_bb.height + 10;
 	return g;
     }
     
