@@ -68,7 +68,10 @@ export default class RDFDiagram extends React.Component {
     }
     
     generate_cell_conect(cell) {
-	if (!cell.isEdge()) {
+	let ret = null;
+	if (cell.isEdge()) {
+	    ret = cell.value;
+	} else {
 	    // generate_cell_content may be called more than once
 	    // dom element with el_id created and populated during
 	    // first call only
@@ -84,9 +87,9 @@ export default class RDFDiagram extends React.Component {
 		    //console.log("renderSomething exit", cell);
 		});
 	    }
-	    return el;
+	    ret = el;
 	}
-	return "rdfs:subClassOf";
+	return ret;
     }
 
     begin_update() {
@@ -107,12 +110,10 @@ export default class RDFDiagram extends React.Component {
 	tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;		
     }
 
-    add_arrow(from_cell, to_cell) {
+    add_arrow(from_cell, to_cell, tag) {
 	//debugger;
 	let parent = this.graph.getDefaultParent();
-	this.graph.insertEdge(parent, null, 'hjkhkj',
-			      from_cell.props.cell,
-			      to_cell.props.cell);
+	this.graph.insertEdge(parent, null, tag, from_cell.props.cell, to_cell.props.cell);
     }
 
     set_diagram_rdf(rdf_graph, cells) {
@@ -128,16 +129,28 @@ export default class RDFDiagram extends React.Component {
 	for (let i = 0; i < triples.length; i++) {
 	    let from_cell = cells[triples[i].subject.id];
 	    let to_cell = cells[triples[i].object.id];
-	    this.add_arrow(from_cell, to_cell);
+	    this.add_arrow(from_cell, to_cell, triples[i].predicate.id);
 	}
 	this.apply_layout();
 	this.end_update();
     }
 
     apply_layout() {
+	//let layout = new mxCircleLayout(this.graph);
+
+	let first = new mxFastOrganicLayout(this.graph);
+	let second = new mxParallelEdgeLayout(this.graph);
+	let layout = new mxCompositeLayout(this.graph, [first, second], first);
+	
+	//let layout = new mxPartitionLayout(this.graph, true, 10, 20);
+	//let layout = new mxRadialTreeLayout(this.graph);
+	//let layout = new mxStackLayout(this.graph, true);
+	//let layout = new mxCompactTreeLayout(this.graph);
 	//let layout = new mxFastOrganicLayout(this.graph);
-	let layout = new mxHierarchicalLayout(this.graph, mxConstants.DIRECTION_NORTH);
-	layout.forceConstant = 80;
+	//mxHierarchicalLayout.prototype.edgeStyle = mxHierarchicalEdgeStyle.STRAIGHT;
+	//let layout = new mxHierarchicalLayout(this.graph, mxConstants.DIRECTION_NORTH);
+	//layout.forceConstant = 80;
+
 	this.graph.getModel().beginUpdate();
 	layout.execute(this.graph.getDefaultParent());
 	this.graph.getModel().endUpdate();
