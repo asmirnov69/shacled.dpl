@@ -61,6 +61,11 @@ export default class RDFDiagram extends React.Component {
 	g.height = class_ctrl_n_bb.height + 10;
 	return g;
     }
+
+    resize_cell(cell) {
+	let g = this.get_cell_geometry(cell);
+	this.graph.resizeCell(cell, g);
+    }
     
     generate_cell_conect(cell) {
 	if (!cell.isEdge()) {
@@ -109,16 +114,29 @@ export default class RDFDiagram extends React.Component {
 			      from_cell.props.cell,
 			      to_cell.props.cell);
     }
-    
-    resize_cell(cell) {
-	let g = this.get_cell_geometry(cell);
-	this.graph.resizeCell(cell, g);
+
+    set_diagram_rdf(rdf_graph, cells) {
+	let ss = rdf_graph.getSubjects().map((x) => x.id);
+	let oss = rdf_graph.getObjects().map((x) => x.id);
+	let nodes = Array.from(new Set([...ss, ...oss]));
+	this.begin_update();
+	for (let i = 0; i < nodes.length; i++) {
+	    let cell = cells[nodes[i]];
+	    this.add_cell(cell);
+	}
+	let triples = rdf_graph.getQuads();
+	for (let i = 0; i < triples.length; i++) {
+	    let from_cell = cells[triples[i].subject.id];
+	    let to_cell = cells[triples[i].object.id];
+	    this.add_arrow(from_cell, to_cell);
+	}
+	this.apply_layout();
+	this.end_update();
     }
 
     apply_layout() {
 	//let layout = new mxFastOrganicLayout(this.graph);
-	let layout = new mxHierarchicalLayout(this.graph,
-					      mxConstants.DIRECTION_NORTH);
+	let layout = new mxHierarchicalLayout(this.graph, mxConstants.DIRECTION_NORTH);
 	layout.forceConstant = 80;
 	this.graph.getModel().beginUpdate();
 	layout.execute(this.graph.getDefaultParent());

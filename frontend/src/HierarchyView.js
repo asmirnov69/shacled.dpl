@@ -56,7 +56,7 @@ class HierarchyView extends React.Component {
     }
 
     build_tree(df, superclass_uri) {
-	debugger;
+	//debugger;
 	let links = df.filter((x) => x.superclass_uri.value === superclass_uri.value);
 	let child_elements = links.map((x) => this.build_tree(df, x.subclass_uri));
 	let new_leave = React.createElement(TreeItem, {nodeId: utils.generateQuickGuid(),

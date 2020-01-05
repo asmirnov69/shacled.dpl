@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from 'react-dom';
 import * as utils from './utils.js';
 
-import Diagram from './Diagram.js';
+import RDFDiagram from './RDFDiagram.js';
 import SHACLClassView from './SHACLClassView.js';
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 
@@ -55,17 +55,31 @@ export default class SHACLEditor extends React.Component {
     }
 
     load_all_classes(db_uri_scheme) {
-	let rq = "select ?class_uri { ?class_uri rdf:type rdfs:Class }";
-	this.fuseki_prx.select(rq).then((rq_res_) => {
-	    let rq_res = utils.to_n3_rows(rq_res_);
-	    console.log("classes: ", rq_res.map(x=>x.class_uri.value));
-	    let class_uris = rq_res.map(x=>x.class_uri);
-	    this.diagram.current.begin_update();
-	    class_uris.forEach((class_uri) => {
-		let v_value = <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri.value} el_id={"shacl-" + utils.generateQuickGuid()}/>;
-		this.diagram.current.add_cell(v_value);
-	    });
-	    this.diagram.current.end_update();
+	let rq = `
+        construct {
+          ?class_uri ?member_path ?member_class_uri.
+          ?class_uri rdfs:subClassOf ?superclass_uri
+        } where {
+          graph <testdb:shacl-defs> {
+            ?class_shape sh:targetClass ?class_uri.
+            optional {?class_shape sh:property [ sh:path ?member_path; sh:class ?member_class_uri ]}
+            optional {?class_uri rdfs:subClassOf ?superclass_uri}
+          }
+        }
+        `;
+	this.fuseki_prx.construct(rq).then((rq_res_) => {
+	    let rq_res = utils.to_n3_model(rq_res_);
+	    let ss = rq_res.getSubjects().map((x) => x.id);
+	    let oss = rq_res.getObjects().map((x) => x.id);
+	    let class_uris = Array.from(new Set([...ss, ...oss]));
+	    let cells = class_uris.map((class_uri) => 
+				       [class_uri, <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} el_id={"shacl-" + utils.generateQuickGuid()}/>]);
+	    let cells_o = {};
+	    for (let i = 0; i < cells.length; i++) {
+		cells_o = {...cells_o, [cells[i][0]]: cells[i][1]};
+	    }
+	    //cells_o = Object.fromEntries(cells);
+	    this.diagram.current.set_diagram_rdf(rq_res, cells_o);
 	});
     }
 
@@ -88,7 +102,7 @@ export default class SHACLEditor extends React.Component {
 		<button onClick={() => this.apply_layout()}>layout</button>
 		<input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		<button onClick={() => this.remove()}>DEL</button>
-		<Diagram ref={this.diagram}/>
+		<RDFDiagram ref={this.diagram}/>
 	        </div>);
     }
 };

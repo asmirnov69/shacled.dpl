@@ -1,4 +1,5 @@
-import * as n3 from 'n3';
+import DataFactory from '../node_modules/n3/src/N3DataFactory.js';
+import N3Store from '../node_modules/n3/src/N3Store.js'; // stream in N3Store.js
 
 export function generateQuickGuid() {
     return Math.random().toString(36).substring(2, 15) +
@@ -7,6 +8,18 @@ export function generateQuickGuid() {
 
 export function get_uri(uri_scheme, s) {
     return "<" + uri_scheme + ":" + s + ">";
+}
+
+function to_n3_UBL(v) {
+    let n3_v = null;
+    if (v.UBLType === 'U') {
+	n3_v = DataFactory.namedNode(v.resource);
+    } else if (v.UBLType === 'B') {
+	n3_v = DataFactory.blankNode(v.resource);
+    } else if (v.UBLType === 'L') {
+	n3_v = DataFactory.literal(v.resource);
+    }
+    return n3_v;
 }
 
 export function to_n3_rows(rq_select_result) {
@@ -18,14 +31,8 @@ export function to_n3_rows(rq_select_result) {
 	let row = {};
 	cols.forEach((col) => {
 	    let v = rq_select_result[col][i];
-	    let n3_v = null;
-	    if (v.UBLType === 'U') {
-		n3_v = n3.DataFactory.namedNode(v.resource);
-	    } else if (v.UBLType === 'B') {
-		n3_v = n3.DataFactory.blankNode(v.resource);
-	    } else if (v.UBLType === 'L') {
-		n3_v = n3.DataFactory.literal(v.resource);
-	    } else {
+	    let n3_v = to_n3_UBL(v);
+	    if (!n3_v) {
 		alarm('unknown UBLType');
 	    }
 	    row = {...row, [col]: n3_v};
@@ -34,3 +41,16 @@ export function to_n3_rows(rq_select_result) {
     }
     return ret;
 }
+
+export function to_n3_model(rq_construct_result) {
+    let ret = new N3Store();
+    rq_construct_result.forEach((triple) => {
+	let s = to_n3_UBL(triple[0]);
+	let p = to_n3_UBL(triple[1]);
+	let o = to_n3_UBL(triple[2]);
+	ret.addQuad(s, p, o);
+    });
+    return ret;
+}
+
+    

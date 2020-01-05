@@ -5,35 +5,26 @@ from pyjenautils import fuseki, jenagraph as j
 sys.path.append(os.path.join(os.environ['dipole_topdir'], "src"))
 import libdipole
 
+def to_UBL(v):
+    ret_v = None
+    if isinstance(v, j.U):
+        ret_v = {'UBLType': 'U', 'resource': v.jena_resource.toString()}
+    elif isinstance(v, j.B):
+        ret_v = {'UBLType': 'B', 'resource': v.jena_resource}
+    elif isinstance(v, j.L):
+        #ipdb.set_trace()
+        ret_v = {'UBLType': 'L', 'resource': v.jena_literal.toString()}
+    return ret_v
+
 def to_json_UBL(col_vs):
     ret = []
     #print "col_vs:", type(col_vs)
     for el in col_vs:
-        if isinstance(el, j.U):
-            ret_el = {'UBLType': 'U', 'resource': el.jena_resource.toString()}
-        elif isinstance(el, j.B):
-            ret_el = {'UBLType': 'B', 'resource': el.jena_resource}
-        elif isinstance(el, j.L):
-            #ipdb.set_trace()
-            ret_el = {'UBLType': 'L', 'resource': el.jena_literal.toString()}
-        else:
-            raise Exception("unknow type")
+        ret_el = to_UBL(el)
+        if ret_el == None:
+            raise Exception("unknow type for element %s" % el)
         ret.append(ret_el)
     return ret
-
-def to_UBL_initial_bindins(initialBindings):
-    initial_bindings = {}
-    for k, v in initialBindings.items():
-        if v.ublType == SHACLEditorMod.EnumUBLType.U:
-            vv = j.U(v.resource)
-        elif v.ublType == SHACLEditorMod.EnumUBLType.B:
-            vv = j.B(v.resource)
-        elif v.ublType == SHACLEditorMod.EnumUBLType.L:
-            vv = j.L(v.resource)
-        else:
-            raise Exception("unknown ubltype")
-        initial_bindings[k] = vv
-    return initial_bindings
 
 @libdipole.exportclass
 class FusekiConnection:
@@ -54,3 +45,8 @@ class FusekiConnection:
         self.fuseki_conn.update(rq)
         print "DONE Fuseki::update:", rq
         
+    def construct(self, rq):
+        print "Fuseki::construct:", rq
+        rq_res = self.fuseki_conn.construct(rq)
+        print "Fuseki::construct res:", rq_res
+        return map(lambda row: map(to_UBL, row), rq_res)
