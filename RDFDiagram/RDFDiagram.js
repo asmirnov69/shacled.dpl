@@ -38,7 +38,7 @@ export default class RDFDiagram extends React.Component {
 	} else {
 	    //mxClient.link('stylesheet', './common.css');
 	    var container = d3.select('#graphContainer').node();
-	    var outline_container = d3.select('#graphOutlineContainer').node();
+
 	    this.graph = new mxGraph(container);
 	    var graph = this.graph;
 	    graph.setHtmlLabels(true);
@@ -46,15 +46,15 @@ export default class RDFDiagram extends React.Component {
 	    graph.setCellsDisconnectable(false);
 	    graph.setCellsCloneable(false);
 	    graph.setAutoSizeCells(true);
+	    graph.gridSize = 40;
 	    //graph.getModel().addListener(mxEvent.CHANGE, (sender, event) => { console.log("CHANGE:", sender, event) });
 
-	    new mxOutline(graph, outline_container);
 	    graph.getLabel = this.generate_cell_conect.bind(this);
 	}
     }
 
     get_cell_geometry(cell) {
-	var class_ctrl_n = d3.select('#' + cell.value.props.el_id + "top").node();
+	var class_ctrl_n = d3.select('#' + cell.value.props.el_id).node();
 	var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
 	var g = cell.getGeometry().clone();
 	g.width = class_ctrl_n_bb.width + 10;
@@ -64,12 +64,13 @@ export default class RDFDiagram extends React.Component {
     
     generate_cell_conect(cell) {
 	if (!cell.isEdge()) {
-	    //console.log("generate_cell_conect", cell);
-	    //debugger;
-	    var el = document.getElementById(cell.value.props.el_id + "top");
+	    // generate_cell_content may be called more than once
+	    // dom element with el_id created and populated during
+	    // first call only
+	    var el = document.getElementById(cell.value.props.el_id);
 	    if (!el) {
 		el = document.createElement("div");		    
-		el.setAttribute("id", cell.value.props.el_id + "top");
+		el.setAttribute("id", cell.value.props.el_id);
 		renderSomething(cell.value, el).then(() => {
 		    //console.log("renderSomething.then", cell);
 		    //debugger;
@@ -77,11 +78,6 @@ export default class RDFDiagram extends React.Component {
 		    this.graph.resizeCell(cell, g);
 		    //console.log("renderSomething exit", cell);
 		});
-		
-		//debugger;
-		//console.log("getLabel exit", cell);
-	    } else {
-		//console.log("getLabel empty exit");
 	    }
 	    return el;
 	}
@@ -106,13 +102,24 @@ export default class RDFDiagram extends React.Component {
 	tcell_state.style[mxConstants.STYLE_EDITABLE] = 0;		
     }
 
+    add_arrow(from_cell, to_cell) {
+	//debugger;
+	let parent = this.graph.getDefaultParent();
+	this.graph.insertEdge(parent, null, 'hjkhkj',
+			      from_cell.props.cell,
+			      to_cell.props.cell);
+    }
+    
     resize_cell(cell) {
 	let g = this.get_cell_geometry(cell);
 	this.graph.resizeCell(cell, g);
     }
 
     apply_layout() {
-	let layout = new mxHierarchicalLayout(this.graph, mxConstants.DIRECTION_SOUTH);
+	//let layout = new mxFastOrganicLayout(this.graph);
+	let layout = new mxHierarchicalLayout(this.graph,
+					      mxConstants.DIRECTION_NORTH);
+	layout.forceConstant = 80;
 	this.graph.getModel().beginUpdate();
 	layout.execute(this.graph.getDefaultParent());
 	this.graph.getModel().endUpdate();
@@ -126,8 +133,6 @@ export default class RDFDiagram extends React.Component {
 		  <button onClick={() => this.graph.zoomActual()}>1:1</button>
 		 </div>
 		 <div id="graphContainer" style={{overflow:'hidden'}}>
-		 </div>
-		 <div id="graphOutlineContainer" style={{zIndex:"1",position:"absolute",overflow:"hidden",top:"0px",right:"0px",width:"320px",height:"120px",background:"transparent",borderStyle:"solid",borderColor:"lightgray"}}>
 		 </div>
 	        </div>);
     }
