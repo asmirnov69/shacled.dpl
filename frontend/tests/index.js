@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import DataFactory from './node_modules/n3/src/N3DataFactory.js';
 import N3Store from './node_modules/n3/src/N3Store.js'; // stream in N3Store.js
-import RDFDiagram from './RDFDiagram.js';
+import RDFDiagram from '../src/RDFDiagram.js';
 
 class Badge extends React.Component {
     constructor(props) {
