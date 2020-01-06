@@ -27,7 +27,7 @@ export default class SHACLEditor extends React.Component {
 	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
 	console.log("rq:", rq);
         this.fuseki_prx.select(rq).then((rq_res) => {
-	    let df = utils.to_n3_rows(rq_res)
+	    let df = utils.to_n3_rows(rq_res);
 	    //debugger;
 	    if (df.length > 0) {
 		alert("such class is already defined");
@@ -55,25 +55,42 @@ export default class SHACLEditor extends React.Component {
     }
 
     load_all_classes(db_uri_scheme) {
-	let rq = `
+	let class_uris = ["testdb:Security", "testdb:Equity", "testdb:Currency"];
+	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
+	let rq_diagram = `
         construct {
           ?class_uri ?member_path ?member_class_uri.
           ?class_uri rdfs:subClassOf ?superclass_uri
         } where {
+          values (?class_uri) {
+           ${class_uris_s}
+          }
           graph <testdb:shacl-defs> {
             ?class_shape sh:targetClass ?class_uri.
             optional {?class_shape sh:property [ sh:path ?member_path; sh:class ?member_class_uri ]}
             optional {?class_uri rdfs:subClassOf ?superclass_uri}
           }
-        }
-        `;
-	this.fuseki_prx.construct(rq).then((rq_res_) => {
+        }`;
+	let rq_class_details = `
+        select ?class_uri ?mpath ?mclass ?mdt 
+        from <testdb:shacl-defs> 
+        where {
+          values (?class_uri) { ${class_uris_s} }
+          ?class_shape sh:targetClass ?class_uri;
+                       sh:property ?class_property.
+          ?class_property sh:path ?mpath.
+          optional {?class_property sh:class ?mclass}
+          optional {?class_property sh:datatype ?mdt}
+        }`;
+
+	let cells = null;
+	this.fuseki_prx.select(rq_class_details).then((rq_res) => {
+	    let df = utils.to_n3_rows(rq_res);
+	    cells = class_uris.map((class_uri) => 
+				   [class_uri, <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} class_details={df} cell={null} el_id={"shacl-" + utils.generateQuickGuid()}/>]);
+	    return this.fuseki_prx.construct(rq_diagram);
+	}).then((rq_res_) => {
 	    let rq_res = utils.to_n3_model(rq_res_);
-	    let ss = rq_res.getSubjects().map((x) => x.id);
-	    let oss = rq_res.getObjects().map((x) => x.id);
-	    let class_uris = Array.from(new Set([...ss, ...oss]));
-	    let cells = class_uris.map((class_uri) => 
-				       [class_uri, <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} el_id={"shacl-" + utils.generateQuickGuid()}/>]);
 	    let cells_o = {};
 	    for (let i = 0; i < cells.length; i++) {
 		cells_o = {...cells_o, [cells[i][0]]: cells[i][1]};

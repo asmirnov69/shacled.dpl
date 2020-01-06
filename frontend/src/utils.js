@@ -12,7 +12,9 @@ export function get_uri(uri_scheme, s) {
 
 function to_n3_UBL(v) {
     let n3_v = null;
-    if (v.UBLType === 'U') {
+    if (v.UBLType === 'N') {
+	n3_v = null;
+    } else if (v.UBLType === 'U') {
 	n3_v = DataFactory.namedNode(v.resource);
     } else if (v.UBLType === 'B') {
 	n3_v = DataFactory.blankNode(v.resource);
@@ -32,9 +34,6 @@ export function to_n3_rows(rq_select_result) {
 	cols.forEach((col) => {
 	    let v = rq_select_result[col][i];
 	    let n3_v = to_n3_UBL(v);
-	    if (!n3_v) {
-		alarm('unknown UBLType');
-	    }
 	    row = {...row, [col]: n3_v};
 	});
 	ret.push(row);

@@ -108,6 +108,7 @@ export default class SHACLClassView extends React.Component {
     
     render() {
 	//debugger;
+	console.log("SHACLClassView:", this.props.df);
 	let class_ctrl_id = this.props.el_id + "-class-ctrl";
 	let members_ctrl_id = this.props.el_id + "-members-ctrl";
 	return (

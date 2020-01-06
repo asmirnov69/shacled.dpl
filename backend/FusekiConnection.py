@@ -1,4 +1,5 @@
 import sys, os
+import pandas as pd
 sys.path.append("/home/asmirnov/pyjenautils")
 from pyjenautils import fuseki, jenagraph as j
 
@@ -6,14 +7,19 @@ sys.path.append(os.path.join(os.environ['dipole_topdir'], "src"))
 import libdipole
 
 def to_UBL(v):
+    #print "to_UBL:", v, type(v)
     ret_v = None
-    if isinstance(v, j.U):
+    if pd.isnull(v):
+        ret_v = {'UBLType': 'N', 'resource': None}
+    elif isinstance(v, j.U):
         ret_v = {'UBLType': 'U', 'resource': v.jena_resource.toString()}
     elif isinstance(v, j.B):
         ret_v = {'UBLType': 'B', 'resource': v.jena_resource}
     elif isinstance(v, j.L):
         #ipdb.set_trace()
         ret_v = {'UBLType': 'L', 'resource': v.jena_literal.toString()}
+    else:
+        raise Exception("to_UBL: unknown value %s" % v)
     return ret_v
 
 def to_json_UBL(col_vs):
