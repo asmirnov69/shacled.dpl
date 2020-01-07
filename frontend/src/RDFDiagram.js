@@ -116,20 +116,22 @@ export default class RDFDiagram extends React.Component {
 	this.graph.insertEdge(parent, null, tag, from_cell.props.cell, to_cell.props.cell);
     }
 
-    set_diagram_rdf(rdf_graph, cells) {
-	let ss = rdf_graph.getSubjects().map((x) => x.id);
-	let oss = rdf_graph.getObjects().map((x) => x.id);
-	let nodes = Array.from(new Set([...ss, ...oss]));
+    set_diagram_rdf(cells, rdf_graph) {
 	this.begin_update();
-	for (let i = 0; i < nodes.length; i++) {
-	    let cell = cells[nodes[i]];
+	let cell_views = Object.values(cells);
+	for (let i = 0; i < cell_views.length; i++) {
+	    let cell = cell_views[i];
 	    this.add_cell(cell);
 	}
 	let triples = rdf_graph.getQuads();
 	for (let i = 0; i < triples.length; i++) {
-	    let from_cell = cells[triples[i].subject.id];
-	    let to_cell = cells[triples[i].object.id];
-	    this.add_arrow(from_cell, to_cell, triples[i].predicate.id);
+	    let subj = triples[i].subject.id;
+	    let obj = triples[i].object.id;
+	    if (subj in cells && obj in cells) {
+		let from_cell = cells[triples[i].subject.id];
+		let to_cell = cells[triples[i].object.id];
+		this.add_arrow(from_cell, to_cell, triples[i].predicate.id);
+	    }
 	}
 	this.apply_layout();
 	this.end_update();

@@ -56,11 +56,12 @@ export default class SHACLEditor extends React.Component {
 
     load_all_classes(db_uri_scheme) {
 	let class_uris = ["testdb:Security", "testdb:Equity", "testdb:Currency"];
+	//let class_uris = ["testdb:Equity"];
 	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
 	let rq_diagram = `
         construct {
-          ?class_uri ?member_path ?member_class_uri.
-          ?class_uri rdfs:subClassOf ?superclass_uri
+          ?class_uri rdfs:subClassOf ?superclass_uri;
+                     ?member_path ?member_class_uri.
         } where {
           values (?class_uri) {
            ${class_uris_s}
@@ -83,20 +84,23 @@ export default class SHACLEditor extends React.Component {
           optional {?class_property sh:datatype ?mdt}
         }`;
 
-	let cells = null;
+	let cell_views = class_uris.map((class_uri) => 
+					[class_uri, <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} class_details={null} cell={null} el_id={"shacl-" + utils.generateQuickGuid()}/>]);
+	let cells = {}; // class_uri -> class view
+	for (let i = 0; i < cell_views.length; i++) {
+	    cells = {...cells, [cell_views[i][0]]: cell_views[i][1]};
+	}
+	//cells = Object.fromEntries(cell_views);
+
 	this.fuseki_prx.select(rq_class_details).then((rq_res) => {
-	    let df = utils.to_n3_rows(rq_res);
-	    cells = class_uris.map((class_uri) => 
-				   [class_uri, <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} class_details={df} cell={null} el_id={"shacl-" + utils.generateQuickGuid()}/>]);
+	    let class_details = utils.to_n3_rows(rq_res);
+	    Object.keys(cells).forEach((k) => {
+		cells[k].props.class_details = class_details
+	    });
 	    return this.fuseki_prx.construct(rq_diagram);
 	}).then((rq_res_) => {
 	    let rq_res = utils.to_n3_model(rq_res_);
-	    let cells_o = {};
-	    for (let i = 0; i < cells.length; i++) {
-		cells_o = {...cells_o, [cells[i][0]]: cells[i][1]};
-	    }
-	    //cells_o = Object.fromEntries(cells);
-	    this.diagram.current.set_diagram_rdf(rq_res, cells_o);
+	    this.diagram.current.set_diagram_rdf(cells, rq_res);
 	});
     }
 
