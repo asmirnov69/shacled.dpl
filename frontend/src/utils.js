@@ -52,4 +52,27 @@ export function to_n3_model(rq_construct_result) {
     return ret;
 }
 
-    
+let prefixes = {
+    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+    'xsd': 'http://www.w3.org/2001/XMLSchema#',
+    'owl': 'http://www.w3.org/2002/07/owl#',
+    'sh': "http://www.w3.org/ns/shacl#",
+    'alg': 'http://drakon.su/ADF#'
+};
+
+export function compact_uri(uri) {
+    let keys = Object.keys(prefixes);
+    let ret = null;
+    for (let i = 0; i < keys.length; i++) {
+	let k = keys[i];
+	let v = prefixes[k];
+	let s_idx = uri.indexOf(v);
+	if (s_idx == 0) {
+	    ret = uri.replace(v, k + ":")
+	    break;
+	}
+    }
+    return ret ? ret : uri;
+}
+	

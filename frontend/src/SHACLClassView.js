@@ -20,8 +20,9 @@ export default class SHACLClassView extends React.Component {
 	let class_details_pre = this.props.class_details
 	    .filter((x) => x.class_uri.id == this.props.class_name)
 	    .map((x) => {
-	    return x.class_uri.id + " " + x.mpath.id + " "
-		+ (x.mclass ? x.mclass.id : "-") + " " + (x.mdt ? x.mdt.id : "--");
+		return utils.compact_uri(x.mpath.id) + " "
+		    + (x.mclass ? utils.compact_uri(x.mclass.id) : "-")
+		    + " " + (x.mdt ? utils.compact_uri(x.mdt.id) : "--");
 	}).join("\n");
 	
 	return (

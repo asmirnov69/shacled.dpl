@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from 'react-dom';
+import * as utils from './utils.js';
 
 // suggested here: https://github.com/facebook/react/issues/10266#issuecomment-318120709
 function renderSomething(instance, container) {
@@ -130,7 +131,7 @@ export default class RDFDiagram extends React.Component {
 	    if (subj in cells && obj in cells) {
 		let from_cell = cells[triples[i].subject.id];
 		let to_cell = cells[triples[i].object.id];
-		this.add_arrow(from_cell, to_cell, triples[i].predicate.id);
+		this.add_arrow(from_cell, to_cell, utils.compact_uri(triples[i].predicate.id));
 	    }
 	}
 	this.apply_layout();
