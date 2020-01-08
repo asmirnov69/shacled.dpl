@@ -53,20 +53,6 @@ export default class RDFDiagram extends React.Component {
 	    graph.getLabel = this.generate_cell_conect.bind(this);
 	}
     }
-
-    get_cell_geometry(cell) {
-	var class_ctrl_n = d3.select('#' + cell.value.props.el_id).node();
-	var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
-	var g = cell.getGeometry().clone();
-	g.width = class_ctrl_n_bb.width + 10;
-	g.height = class_ctrl_n_bb.height + 10;
-	return g;
-    }
-
-    resize_cell(cell) {
-	let g = this.get_cell_geometry(cell);
-	this.graph.resizeCell(cell, g);
-    }
     
     generate_cell_conect(cell) {
 	let ret = null;
@@ -83,7 +69,14 @@ export default class RDFDiagram extends React.Component {
 		renderSomething(cell.value, el).then(() => {
 		    //console.log("renderSomething.then", cell);
 		    //debugger;
-		    let g = this.get_cell_geometry(cell);
+		    // finding dom element from cell
+		    let u_el_id = cell.value.props.el_id + "-class-ctrl";
+		    var class_ctrl_n = d3.select('#' + u_el_id).node();
+		    var class_ctrl_n_bb = class_ctrl_n.getBoundingClientRect();
+		    let g = cell.getGeometry().clone();
+		    g.width = class_ctrl_n_bb.width + 10;
+		    g.height = class_ctrl_n_bb.height + 10;
+		    
 		    this.graph.resizeCell(cell, g);
 		    //console.log("renderSomething exit", cell);
 		});
@@ -134,6 +127,7 @@ export default class RDFDiagram extends React.Component {
 		this.add_arrow(from_cell, to_cell, utils.compact_uri(triples[i].predicate.id));
 	    }
 	}
+
 	this.apply_layout();
 	this.end_update();
     }

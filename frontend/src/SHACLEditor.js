@@ -73,15 +73,18 @@ export default class SHACLEditor extends React.Component {
           }
         }`;
 	let rq_class_details = `
-        select ?class_uri ?mpath ?mclass ?mdt 
+        select ?class_uri ?mpath ?mclass ?mdt ?superclass_uri
         from <testdb:shacl-defs> 
         where {
           values (?class_uri) { ${class_uris_s} }
-          ?class_shape sh:targetClass ?class_uri;
-                       sh:property ?class_property.
-          ?class_property sh:path ?mpath.
-          optional {?class_property sh:class ?mclass}
-          optional {?class_property sh:datatype ?mdt}
+          {
+           ?class_shape sh:targetClass ?class_uri; sh:property ?class_property.
+           ?class_property sh:path ?mpath.
+           optional {?class_property sh:class ?mclass}
+           optional {?class_property sh:datatype ?mdt}
+          } union {
+           ?class_uri rdfs:subClassOf ?superclass_uri
+          }
         }`;
 
 	let cell_views = class_uris.map((class_uri) => 
