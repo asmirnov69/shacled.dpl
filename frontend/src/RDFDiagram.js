@@ -152,6 +152,10 @@ export default class RDFDiagram extends React.Component {
 	layout.execute(this.graph.getDefaultParent());
 	this.graph.getModel().endUpdate();
     }
+
+    clear() {
+	this.graph.removeCells(this.graph.getChildVertices(this.graph.getDefaultParent()));
+    }
     
     render() {
 	return (<div style={{display: "grid", gridTemplateRows: "30px auto"}}>

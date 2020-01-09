@@ -9,18 +9,21 @@ import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
+	this.state = {class_uris: ['testdb:Equity']}
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 	this.diagram = React.createRef();
 	this.add_shacl_class = this.add_shacl_class.bind(this);
 	this.load_all_classes = this.load_all_classes.bind(this);
 	this.remove = this.remove.bind(this);	
 	this.new_classname = React.createRef();
-    }
-    
-    shouldComponentUpdate() {
-        return false;
+
+	this.on_class_uri_add = this.on_class_uri_add.bind(this);
     }
 
+    componentDidMount() {
+	this.load_all_classes();
+    }
+    
     add_shacl_class() {
 	let class_name = this.new_classname.current.value;
 	let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
@@ -54,8 +57,20 @@ export default class SHACLEditor extends React.Component {
 	});
     }
 
-    load_all_classes(db_uri_scheme) {
-	let class_uris = ["testdb:Security", "testdb:Equity", "testdb:Currency"];
+    on_class_uri_add(new_class_uri) {
+	console.log("new uri:", new_class_uri);
+	let new_state = this.state;
+	new_state.class_uris.push(new_class_uri);
+	this.setState(new_state, () => this.load_all_classes());
+	
+    }
+    
+    load_all_classes() {
+	this.diagram.current.clear();
+	
+	let db_uri_scheme = this.props.db_uri_scheme;
+	let class_uris = this.state.class_uris;
+	//let class_uris = ["testdb:Security", "testdb:Equity", "testdb:Currency"];
 	//let class_uris = ["testdb:Equity"];
 	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
 	let rq_diagram = `
@@ -73,7 +88,7 @@ export default class SHACLEditor extends React.Component {
           }
         }`;
 	let rq_class_details = `
-        select ?class_uri ?mpath ?mclass ?mdt ?superclass_uri
+        select ?class_uri ?mpath ?mclass ?mdt ?superclass_uri ?subclass_uri
         from <testdb:shacl-defs> 
         where {
           values (?class_uri) { ${class_uris_s} }
@@ -84,11 +99,22 @@ export default class SHACLEditor extends React.Component {
            optional {?class_property sh:datatype ?mdt}
           } union {
            ?class_uri rdfs:subClassOf ?superclass_uri
+          } union {
+           ?subclass_uri rdfs:subClassOf ?class_uri
           }
         }`;
 
 	let cell_views = class_uris.map((class_uri) => 
-					[class_uri, <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_uri} class_details={null} cell={null} el_id={"shacl-" + utils.generateQuickGuid()}/>]);
+					[class_uri, <SHACLClassView
+					 diagram={this.diagram.current}
+					 top_app={this.props.top_app}
+					 class_name={class_uri}
+					 class_details={null}
+					 cell={null}
+					 el_id={"shacl-" + utils.generateQuickGuid()}
+					 on_class_uri_add={(new_class_uri)=> this.on_class_uri_add(new_class_uri)}
+					 on_class_uri_del={(del_class_uri)=>console.log("del url:", del_class_uri)}
+					 />]);
 	let cells = {}; // class_uri -> class view
 	for (let i = 0; i < cell_views.length; i++) {
 	    cells = {...cells, [cell_views[i][0]]: cell_views[i][1]};
@@ -117,14 +143,15 @@ export default class SHACLEditor extends React.Component {
 	    let selected_cell = this.graph.getSelectionCell();
 	    this.graph.removeCells([selected_cell]);
 	}
-    }    
+    }
 
     render() {
 	return (<div>
-		<button onClick={() => this.load_all_classes("testdb")}>LOAD testdb</button>
+		<button onClick={() => this.load_all_classes()}>LOAD testdb</button>
 		<button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
 		<button onClick={() => this.apply_layout()}>layout</button>
 		<input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
+		<input type="text" value={this.state.class_uris.join(",")}></input>
 		<button onClick={() => this.remove()}>DEL</button>
 		<RDFDiagram ref={this.diagram}/>
 	        </div>);
