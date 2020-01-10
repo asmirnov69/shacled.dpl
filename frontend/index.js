@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './src/App.js';
+import SHACLEditor from './SHACLEditor/SHACLEditor.js';
 import {getBackendCommunicator} from 'libdipole-js';
 
 getBackendCommunicator().then((communicator) => {
-    ReactDOM.render(<App communicator={communicator}/>, document.getElementById('root'));
+    ReactDOM.render(<SHACLEditor communicator={communicator}/>, document.getElementById('root'));
 });
 

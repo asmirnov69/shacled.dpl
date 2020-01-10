@@ -4,7 +4,7 @@ import SHACLClassEditorDialog from './SHACLClassEditorDialog.js';
 import HierarchyView from './HierarchyView.js';
 import DataSheet from './DataSheet.js';
 
-export default class App extends React.Component {
+export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
 	this.class_editor_dialog_ref = React.createRef();
