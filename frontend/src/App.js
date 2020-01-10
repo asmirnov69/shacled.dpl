@@ -2,19 +2,12 @@ import React from "react";
 import SHACLEditor from './SHACLEditor.js';
 import SHACLClassEditorDialog from './SHACLClassEditorDialog.js';
 import HierarchyView from './HierarchyView.js';
-import ReactDataSheet from 'react-datasheet';
+import DataSheet from './DataSheet.js';
 
 export default class App extends React.Component {
     constructor(props) {
 	super(props);
 	this.class_editor_dialog_ref = React.createRef();
-	this.state = {
-	    classEditorDialogOpen: false,
-	    grid: [
-		[{value:  1}, {value:  3}],
-		[{value:  2}, {value:  4}]
-	    ]
-	};
     }
 
     render() {
@@ -29,17 +22,7 @@ export default class App extends React.Component {
 		<SHACLClassEditorDialog ref={this.class_editor_dialog_ref}/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>
-		<ReactDataSheet
-		  data={this.state.grid}
-		 valueRenderer={(cell) => cell.value}
-		 onCellsChanged={changes => {
-		    const grid = this.state.grid.map(row => [...row])
-		    changes.forEach(({cell, row, col, value}) => {
-			grid[row][col] = {...grid[row][col], value}
-		    })
-		    this.setState({grid})
-		}}
-		/>
+		<DataSheet/>
 		</div>
 		</div>);
     }

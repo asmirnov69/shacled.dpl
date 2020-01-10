@@ -60,7 +60,8 @@ export default class SHACLClassView extends React.Component {
 		<table id={class_ctrl_id}>
 		 <tbody>
 		<tr>{heading}
-		   <td><input type="button" value="++" onClick={()=>this.props.top_app.class_editor_dialog_ref.current.show_dialog(this.props.class_name)}/></td>
+		 <td><input type="button" value="++" onClick={()=>this.props.top_app.class_editor_dialog_ref.current.show_dialog(this.props.class_name)}/></td>
+		 <td><input type="button" value="S"/></td>
 		  </tr>
 	        {class_details_pre}
 	        <tr><td>{subclass_uris}</td></tr>
