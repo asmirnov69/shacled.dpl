@@ -6,7 +6,7 @@ import RDFDiagram from './RDFDiagram.js';
 import SHACLClassView from './SHACLClassView.js';
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 
-export default class SHACLEditor extends React.Component {
+export default class SHACLDiagram extends React.Component {
     constructor(props) {
 	super(props);
 	this.state = {class_uris: ['testdb:Equity']}
