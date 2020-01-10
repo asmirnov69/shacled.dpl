@@ -48,12 +48,18 @@ export default class SHACLClassView extends React.Component {
 	let subclass_uris = this.props.class_details
 	    .filter((x) => x.class_uri.id == this.props.class_name && x.subclass_uri != null)
 	    .map((x) => (<a href="#" onClick={() => this.on_subclass_click(x.subclass_uri.id)}>{x.subclass_uri.id}</a>));
+
+	let heading = null;
+	if (superclass_uris.length > 0) {
+	    heading = (<td><b>{this.props.class_name}</b>(<i>{superclass_uris}</i>)</td>);
+	} else {
+	    heading = (<td><b>{this.props.class_name}</b></td>);
+	}
+	
 	return (
 		<table id={class_ctrl_id}>
 		 <tbody>
-		  <tr>
-		   <td><b>{this.props.class_name}</b></td>
-		   <td><i>{superclass_uris}</i></td>
+		<tr>{heading}
 		   <td><input type="button" value="++" onClick={()=>this.props.top_app.class_editor_dialog_ref.current.show_dialog(this.props.class_name)}/></td>
 		  </tr>
 	        {class_details_pre}
