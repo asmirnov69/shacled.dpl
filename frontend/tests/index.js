@@ -2,19 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import DataFactory from './node_modules/n3/src/N3DataFactory.js';
 import N3Store from './node_modules/n3/src/N3Store.js'; // stream in N3Store.js
-import RDFDiagram from '../src/RDFDiagram.js';
+import RDFDiagram from '../SHACLEditor/RDFDiagram.js';
 
-class Badge extends React.Component {
-    constructor(props) {
-	super(props);
-    }
-    
-    render() {
-	return (<div>
-		<h1>{this.props.text}</h1>
-		</div>);
-    }
-};
 
 class RDFDiagramTest extends React.Component {
     constructor(props) {
@@ -44,24 +33,7 @@ class RDFDiagramTest extends React.Component {
 		      DataFactory.namedNode('testdb:ll'),
 		      DataFactory.namedNode('testdb:A3'));
 
-	
-	let ss = store.getSubjects().map((x) => x.id);
-	let oss = store.getObjects().map((x) => x.id);
-	let nodes = Array.from(new Set([...ss, ...oss]));
-	this.diagram.current.begin_update();
-	for (let i = 0; i < nodes.length; i++) {
-	    let cell = <Badge el_id={"t" + i} text={nodes[i]}/>;
-	    this.cells[nodes[i]] = cell;
-	    this.diagram.current.add_cell(cell);
-	}
-	let triples = store.getQuads();
-	for (let i = 0; i < triples.length; i++) {
-	    let from_cell = this.cells[triples[i].subject.id];
-	    let to_cell = this.cells[triples[i].object.id];
-	    this.diagram.current.add_arrow(from_cell, to_cell);
-	}
-	this.diagram.current.apply_layout();
-	this.diagram.current.end_update();
+	this.diagram.current.set_diagram(store, null, null);
     }
 
     add_arrow_test() {
