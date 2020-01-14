@@ -66,8 +66,6 @@ export default class SHACLDiagram extends React.Component {
     }
     
     load_all_classes() {
-	this.diagram.current.clear();
-	
 	let db_uri_scheme = this.props.db_uri_scheme;
 	let class_uris = this.state.class_uris;
 	//let class_uris = ["testdb:Security", "testdb:Equity", "testdb:Currency"];
@@ -104,32 +102,30 @@ export default class SHACLDiagram extends React.Component {
           }
         }`;
 
-	let cell_views = class_uris.map((class_uri) => 
-					[class_uri, <SHACLClassView
-					 diagram={this.diagram.current}
-					 top_app={this.props.top_app}
-					 class_name={class_uri}
-					 class_details={null}
-					 cell={null}
-					 el_id={"shacl-" + utils.generateQuickGuid()}
-					 on_class_uri_add={(new_class_uri)=> this.on_class_uri_add(new_class_uri)}
-					 on_class_uri_del={(del_class_uri)=>console.log("del url:", del_class_uri)}
-					 />]);
-	let cells = {}; // class_uri -> class view
-	for (let i = 0; i < cell_views.length; i++) {
-	    cells = {...cells, [cell_views[i][0]]: cell_views[i][1]};
-	}
-	//cells = Object.fromEntries(cell_views);
+	let new_class_uris = this.diagram.current.get_new_uris(class_uris);
+	let uri_cells = new_class_uris.map((class_uri) => 
+				       [class_uri, <SHACLClassView
+					diagram={this.diagram.current}
+					top_app={this.props.top_app}
+					class_name={class_uri}
+					class_details={null}
+					cell={null}
+					el_id={"shacl-" + utils.generateQuickGuid()}
+					on_class_uri_add={(new_class_uri)=> this.on_class_uri_add(new_class_uri)}
+					on_class_uri_del={(del_class_uri)=>console.log("del url:", del_class_uri)}
+					/>]);
 
 	this.fuseki_prx.select(rq_class_details).then((rq_res) => {
 	    let class_details = utils.to_n3_rows(rq_res);
-	    Object.keys(cells).forEach((k) => {
-		cells[k].props.class_details = class_details
-	    });
+	    for (let [uri, cell] of uri_cells) {
+		cell.props.class_details = class_details
+	    }
+	    this.diagram.current.set_uri_cells(uri_cells);
 	    return this.fuseki_prx.construct(rq_diagram);
 	}).then((rq_res_) => {
 	    let rq_res = utils.to_n3_model(rq_res_);
-	    this.diagram.current.set_diagram_rdf(cells, rq_res);
+	    this.diagram.current.set_diagram(rq_res);
+	    this.diagram.current.refresh();
 	});
     }
 

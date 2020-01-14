@@ -126,47 +126,43 @@ export default class RDFDiagram extends React.Component {
 	this.graph.insertEdge(parent, null, tag, from_cell.cell, to_cell.cell);
     }
 
-    set_diagram(rdf_graph, req_new_uri_cells_cb, delete_uri_cells_cb) {
-	let ss = rdf_graph.getSubjects().map((x) => x.id);
-	let oss = rdf_graph.getObjects().map((x) => x.id);
-	let rdf_graph_uris = new Set([...ss, ...oss]);
+    get_new_uris(uris) {
 	let diagram_uris = new Set(Object.keys(this.uri_cells));
-	let new_uris = Array.from(new Set([...rdf_graph_uris].filter(x => !diagram_uris.has(x))));
-	let todel_uris = Array.from(new Set([...diagram_uris].filter(x => !rdf_graph_uris.has(x))));
-
-	if (delete_uri_cells_cb) {
-	    delete_uri_cells_cb(todel_uris.map((k) => this.uri_cells[k]));
+	return Array.from(new Set(uris.filter(x => !diagram_uris.has(x))));
+    }
+    
+    set_uri_cells(uri_cells) {
+	for (let [uri, uri_cell_component] of uri_cells) {
+	    if (!(uri in this.uri_cells)) {
+		this.uri_cells[uri] = new RDFDiagramCell(uri_cell_component);
+	    }
 	}
+    }
 
-	let new_uri_cells = null;
-	if (req_new_uri_cells_cb) {
-	    new_uri_cells = req_new_uri_cells_cb(new_uris);
-	} else {
-	    new_uri_cells = new_uris.map((new_uri) => {
-		return [new_uri,
-			new RDFDiagramCell((<Badge el_id={utils.generateQuickGuid()} text={new_uri}/>))];
-	    });
-	}
+    remove_uri_cells(uris) {
+    }
+    
+    set_diagram(rdf_graph) {
+	this.rdf_graph = rdf_graph;
+    }
 
+    refresh() {
 	this.graph.getModel().beginUpdate();
-	todel_uris.forEach((todel_uri) => {
-	    this.uri_cells[todel_uri].remove_from_diagram(this);
-	    delete this.uri_cells[todel_uri];
-	});
-		
-	for (let [new_uri, new_uri_cell] of new_uri_cells) {
-	    this.uri_cells[new_uri] = new_uri_cell;
-	    new_uri_cell.add_to_diagram(this);
+	for (let [new_uri, new_uri_cell] of Object.entries(this.uri_cells)) {
+	    if (!new_uri_cell.cell) {
+		new_uri_cell.add_to_diagram(this);
+	    }
 	}
 
-	let triples = rdf_graph.getQuads();
+	let triples = this.rdf_graph.getQuads();
 	for (let i = 0; i < triples.length; i++) {
 	    let subj = triples[i].subject.id;
 	    let obj = triples[i].object.id;
-	    //assert(subj in this.uri_cells && obj in this.uri_cells);
-	    let from_cell = this.uri_cells[triples[i].subject.id];
-	    let to_cell = this.uri_cells[triples[i].object.id];
-	    this.__add_arrow(from_cell, to_cell, utils.compact_uri(triples[i].predicate.id));	    
+	    if (subj in this.uri_cells && obj in this.uri_cells) {
+		let from_cell = this.uri_cells[triples[i].subject.id];
+		let to_cell = this.uri_cells[triples[i].object.id];
+		this.__add_arrow(from_cell, to_cell, utils.compact_uri(triples[i].predicate.id));
+	    }
 	}
 	
 	this.graph.getModel().endUpdate();	

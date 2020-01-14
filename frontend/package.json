@@ -18,7 +18,6 @@
     "@material-ui/core": "^4.6.1",
     "@material-ui/icons": "^4.5.1",
     "@material-ui/lab": "^4.0.0-alpha.32",
-    "d3": "^5.14.2",
     "libdipole-js": "file:../../dipole/src/libdipole-js",
     "mxgraph": "^4.0.6",
     "n3": "^1.3.5",

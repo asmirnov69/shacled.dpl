@@ -76,3 +76,8 @@ export function compact_uri(uri) {
     return ret ? ret : uri;
 }
 	
+export function get_graph_nodes(rdf_graph) {
+    let ss = rdf_graph.getSubjects().map((x) => x.id);
+    let oss = rdf_graph.getObjects().map((x) => x.id);
+    return Array.from(new Set([...ss, ...oss]));
+}
