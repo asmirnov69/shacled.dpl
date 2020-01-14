@@ -4,7 +4,6 @@ import DataFactory from './node_modules/n3/src/N3DataFactory.js';
 import N3Store from './node_modules/n3/src/N3Store.js'; // stream in N3Store.js
 import RDFDiagram from '../SHACLEditor/RDFDiagram.js';
 
-
 class RDFDiagramTest extends React.Component {
     constructor(props) {
 	super(props);

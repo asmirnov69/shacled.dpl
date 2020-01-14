@@ -71,7 +71,7 @@ export default class RDFDiagram extends React.Component {
 	    mxUtils.error('Browser is not supported!', 200, false);
 	} else {
 	    //mxClient.link('stylesheet', './common.css');
-	    var container = d3.select('#graphContainer').node();
+	    let container = document.getElementById('graphContainer');
 
 	    this.graph = new mxGraph(container);
 	    var graph = this.graph;
@@ -95,7 +95,7 @@ export default class RDFDiagram extends React.Component {
 	    // generate_cell_content may be called more than once
 	    // dom element with el_id created and populated during
 	    // first call only
-	    var el = document.getElementById(cell.value.cell_view_component.props.el_id);
+	    let el = document.getElementById(cell.value.cell_view_component.props.el_id);
 	    if (!el) {
 		el = document.createElement("div");		    
 		el.setAttribute("id", cell.value.cell_view_component.props.el_id);
@@ -104,14 +104,9 @@ export default class RDFDiagram extends React.Component {
 		    //debugger;
 		    // finding dom element from cell
 		    let u_el_id = cell.value.cell_view_component.props.el_id + "-class-ctrl";
-		    let class_ctrl_dom = null;
-		    try {
-			class_ctrl_dom = d3.select('#' + u_el_id);
-		    } catch (err) {
-		    }
-		    
-		    if (class_ctrl_dom && class_ctrl_dom.node()) {
-			let class_ctrl_bb = class_ctrl_dom.node().getBoundingClientRect();
+		    let class_ctrl_node = document.getElementById(u_el_id);
+		    if (class_ctrl_node) {
+			let class_ctrl_bb = class_ctrl_node.getBoundingClientRect();
 			let g = cell.getGeometry().clone();
 			g.width = class_ctrl_bb.width + 10;
 			g.height = class_ctrl_bb.height + 10;
