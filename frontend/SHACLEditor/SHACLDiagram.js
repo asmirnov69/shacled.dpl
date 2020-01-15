@@ -9,14 +9,14 @@ import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 class SHACLClassViewFactory {
     constructor(fuseki_prx) {
 	this.fuseki_prx = fuseki_prx;
-	this.class_details = null;
+	this.class_details = {}; // uri -> list of members
     }
 
     refresh(class_uris) {
 	let values_class_uris = '';
 	if (class_uris) {
 	    let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
-	    values_class_uris = `values (?class_uri) { ${class_uri_s} }`;
+	    values_class_uris = `values (?class_uri) { ${class_uris_s} }`;
 	}
 	let rq_class_details = `
             select ?class_uri ?mpath ?mclass ?mdt ?superclass_uri ?subclass_uri
@@ -36,17 +36,28 @@ class SHACLClassViewFactory {
             }`;
 
 	return this.fuseki_prx.select(rq_class_details).then(rq_res => {
-	    this.class_details = utils.to_n3_rows(rq_res);
+	    let df = utils.to_n3_rows(rq_res);
+	    //debugger;
+	    for (let r of df) {
+		if (!(r.class_uri.id in this.class_details)) {
+		    this.class_details[r.class_uri.id] = [];
+		}
+		this.class_details[r.class_uri.id].push(r);
+	    }
 	    return Promise.resolve();
 	});
     }
     
     get_object(class_uri, props) {
-	return (<SHACLClassView class_name={class_uri}
-		                class_details={this.class_details}
-		                el_id={"shacl-" + utils.generateQuickGuid()}
-		                {...props}/>);
-    }
+	let ret = null;
+	if (class_uri in this.class_details) {
+	    ret = (<SHACLClassView class_name={class_uri}
+		   class_details={this.class_details[class_uri]}
+		   el_id={"shacl-" + utils.generateQuickGuid()}
+		   {...props}/>);
+	}
+	return ret;
+    }    
 };
 
 export default class SHACLDiagram extends React.Component {
@@ -104,35 +115,41 @@ export default class SHACLDiagram extends React.Component {
     }
     
     add_shacl_class() {
+	debugger;
 	let class_name = this.new_classname.current.value;
-	let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
-	let rq = `select ?class_shape from <testdb:shacl-defs> where { ?class_shape sh:targetClass ${new_class_uri} }`;
-	console.log("rq:", rq);
-        this.fuseki_prx.select(rq).then((rq_res) => {
-	    let df = utils.to_n3_rows(rq_res);
-	    //debugger;
-	    if (df.length > 0) {
-		alert("such class is already defined");
-		return;
-	    }
+	if (class_name.length == 0) {
+	    alert("class name is empty");
+	    return;
+	}
+	
+	//let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
+	let new_class_uri = "testdb:" + class_name;
+	if (new_class_uri in this.shacl_class_view_factory.class_details) {
+	    alert("such class is already defined");
+	    return;
+	}
 
-	    let random_uri = utils.get_uri(this.props.db_uri_scheme, utils.generateQuickGuid());
-	    let rq = `insert data {
+	let random_uri = utils.get_uri(this.props.db_uri_scheme, utils.generateQuickGuid());
+	let rq = `insert data {
                graph <testdb:shacl-defs> { 
-                  ${random_uri} rdf:type sh:NodeShape; sh:targetClass ${new_class_uri}.
-                  ${new_class_uri} rdf:type rdfs:Class.
+                  ${random_uri} rdf:type sh:NodeShape; sh:targetClass <${new_class_uri}>.
+                  <${new_class_uri}> rdf:type rdfs:Class.
                }
-               ${new_class_uri} rdf:type rdfs:Class.
+               <${new_class_uri}> rdf:type rdfs:Class.
             }`;
 
-	    console.log(rq);
-	    this.fuseki_prx.update(rq).then(() => {
-		console.log("insert done");
-		let v_value = <SHACLClassView diagram={this.diagram.current} top_app={this.props.top_app} class_name={class_name} el_id={"shacl-" + utils.generateQuickGuid()}/>;
-		this.diagram.current.begin_update();
-		this.diagram.current.add_cell(v_value);
-		this.diagram.current.end_update();
-	    });
+	console.log(rq);
+	this.fuseki_prx.update(rq).then(() => {
+	    console.log("insert done");
+	    return this.shacl_class_view_factory.refresh([new_class_uri]);
+	}).then(() => {
+	    let o = this.shacl_class_view_factory.get_object(new_class_uri,
+							     {diagram: this.diagram.current,
+							      top_app: this.props.top_app,
+							      class_name: new_class_uri,
+							      el_id: "shacl-" + utils.generateQuickGuid()});
+	    this.diagram.current.set_nodes([new_class_uri, o]);
+	    this.diagram.current.refresh();
 	});
     }
 
@@ -142,7 +159,6 @@ export default class SHACLDiagram extends React.Component {
 	new_state.class_uris.push(new_class_uri);
 	this.setState(new_state, () => this.load_classes());	
     }
-    
 
     apply_layout() {
 	this.diagram.current.apply_layout();

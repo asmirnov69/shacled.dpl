@@ -26,12 +26,10 @@ export default class SHACLClassView extends React.Component {
     
     render() {
 	//debugger;
-	console.log("SHACLClassView:", this.props.class_details);
+	//console.log("SHACLClassView:", this.props.class_details);
 	let class_ctrl_id = this.props.el_id + "-class-ctrl";
 
-	let class_details_pre = this.props.class_details
-	    .filter((x) => x.superclass_uri == null && x.subclass_uri == null)
-	    .filter((x) => x.class_uri.id == this.props.class_name)
+	let class_details_pre = this.props.class_details.filter((x) => x.superclass_uri == null && x.subclass_uri == null)
 	    .map((x) => {
 		let v = null;
 		if (x.mclass) {
@@ -39,14 +37,12 @@ export default class SHACLClassView extends React.Component {
 		} else if (x.mdt) {
 		    v = utils.compact_uri(x.mdt.id);
 		}
-		
 		return (<tr><td>{utils.compact_uri(x.mpath.id)}</td><td><i>{v}</i></td></tr>);
 	    });
-	let superclass_uris = this.props.class_details
-	    .filter((x) => x.class_uri.id == this.props.class_name && x.superclass_uri != null)
+	
+	let superclass_uris = this.props.class_details.filter((x) => x.superclass_uri != null)
 	    .map((x) => (<a href="#" onClick={() => this.on_superclass_click(x.superclass_uri.id)}>{x.superclass_uri.id}</a>));
-	let subclass_uris = this.props.class_details
-	    .filter((x) => x.class_uri.id == this.props.class_name && x.subclass_uri != null)
+	let subclass_uris = this.props.class_details.filter((x) => x.subclass_uri != null)
 	    .map((x) => (<a href="#" onClick={() => this.on_subclass_click(x.subclass_uri.id)}>{x.subclass_uri.id}</a>));
 
 	let heading = null;
