@@ -29,7 +29,7 @@ export default class SHACLClassView extends React.Component {
 	//console.log("SHACLClassView:", this.props.class_details);
 	let class_ctrl_id = this.props.el_id + "-class-ctrl";
 
-	let class_details_pre = this.props.class_details.filter((x) => x.superclass_uri == null && x.subclass_uri == null)
+	let class_details_pre = this.props.class_details.filter((x) => x.superclass_uri == null && x.subclass_uri == null && x.mpath)
 	    .map((x) => {
 		let v = null;
 		if (x.mclass) {

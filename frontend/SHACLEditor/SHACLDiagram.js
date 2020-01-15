@@ -7,9 +7,11 @@ import SHACLClassView from './SHACLClassView.js';
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 
 class SHACLClassViewFactory {
-    constructor(fuseki_prx) {
+    constructor(shacl_diagram, fuseki_prx) {
+	this.shacl_diagram = shacl_diagram;
 	this.fuseki_prx = fuseki_prx;
-	this.class_details = {}; // uri -> list of members
+	this.class_details = {}; // uri -> list of class members
+	this.shacl_class_views = {}; // uri -> SHACLClassView
     }
 
     refresh(class_uris) {
@@ -24,10 +26,13 @@ class SHACLClassViewFactory {
             where {
               ${values_class_uris}
               {
-              ?class_shape sh:targetClass ?class_uri; sh:property ?class_property.
-              ?class_property sh:path ?mpath.
-              optional {?class_property sh:class ?mclass}
-              optional {?class_property sh:datatype ?mdt}
+               ?class_shape sh:targetClass ?class_uri; 
+               optional { 
+                 ?class_shape sh:property ?class_property.
+                 ?class_property sh:path ?mpath.              
+                 optional {?class_property sh:class ?mclass}
+                 optional {?class_property sh:datatype ?mdt}
+               }
               } union {
                ?class_uri rdfs:subClassOf ?superclass_uri
               } union {
@@ -37,27 +42,35 @@ class SHACLClassViewFactory {
 
 	return this.fuseki_prx.select(rq_class_details).then(rq_res => {
 	    let df = utils.to_n3_rows(rq_res);
-	    //debugger;
 	    for (let r of df) {
 		if (!(r.class_uri.id in this.class_details)) {
 		    this.class_details[r.class_uri.id] = [];
 		}
 		this.class_details[r.class_uri.id].push(r);
 	    }
+
+	    debugger;
+	    Object.keys(this.class_details).forEach(class_uri => {
+		let new_node_props = {diagram: this.shacl_diagram.diagram.current,
+				      top_app: this.shacl_diagram.props.top_app,
+				      cell: null,
+				      on_class_uri_add: (new_class_uri)=> this.shacl_diagram.on_class_uri_add(new_class_uri),
+				      on_class_uri_del: (del_class_uri)=>console.log("del url:", del_class_uri)};
+		let o = (<SHACLClassView
+			 class_name={class_uri}
+			 class_details={this.class_details[class_uri]}
+			 el_id={"shacl-" + utils.generateQuickGuid()}
+			 {...new_node_props}/>);
+		this.shacl_class_views[class_uri] = o;
+	    });
+		    
 	    return Promise.resolve();
 	});
     }
     
-    get_object(class_uri, props) {
-	let ret = null;
-	if (class_uri in this.class_details) {
-	    ret = (<SHACLClassView class_name={class_uri}
-		   class_details={this.class_details[class_uri]}
-		   el_id={"shacl-" + utils.generateQuickGuid()}
-		   {...props}/>);
-	}
-	return ret;
-    }    
+    get_object(class_uri) {
+	return class_uri in this.shacl_class_views ? this.shacl_class_views[class_uri] : null;
+    }
 };
 
 export default class SHACLDiagram extends React.Component {
@@ -65,9 +78,9 @@ export default class SHACLDiagram extends React.Component {
 	super(props);
 	this.state = {class_uris: ['testdb:Equity']}
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
-	this.shacl_class_view_factory = new SHACLClassViewFactory(this.fuseki_prx);
+	this.shacl_class_view_factory = new SHACLClassViewFactory(this, this.fuseki_prx);
 	this.diagram = React.createRef();
-	this.add_shacl_class = this.add_shacl_class.bind(this);
+	this.add_class = this.add_class.bind(this);
 	this.load_classes = this.load_classes.bind(this);
 	this.remove = this.remove.bind(this);	
 	this.new_classname = React.createRef();
@@ -99,12 +112,7 @@ export default class SHACLDiagram extends React.Component {
         }`;
 
 	let new_uris = class_uris.filter(x => !(x in this.diagram.current.nodes));
-	let new_node_props = {diagram: this.diagram.current,
-	                      top_app: this.props.top_app,
-	                      cell: null,
-		              on_class_uri_add: (new_class_uri)=> this.on_class_uri_add(new_class_uri),
-		              on_class_uri_del: (del_class_uri)=>console.log("del url:", del_class_uri)};
-	let new_nodes = new_uris.map(x => [x, this.shacl_class_view_factory.get_object(x, new_node_props)]);
+	let new_nodes = new_uris.map(x => [x, this.shacl_class_view_factory.get_object(x)]);
 	this.diagram.current.set_nodes(new_nodes);
 
 	this.fuseki_prx.construct(rq_diagram).then(rq_res_ => {
@@ -114,7 +122,7 @@ export default class SHACLDiagram extends React.Component {
 	});
     }
     
-    add_shacl_class() {
+    add_class() {
 	debugger;
 	let class_name = this.new_classname.current.value;
 	if (class_name.length == 0) {
@@ -143,12 +151,8 @@ export default class SHACLDiagram extends React.Component {
 	    console.log("insert done");
 	    return this.shacl_class_view_factory.refresh([new_class_uri]);
 	}).then(() => {
-	    let o = this.shacl_class_view_factory.get_object(new_class_uri,
-							     {diagram: this.diagram.current,
-							      top_app: this.props.top_app,
-							      class_name: new_class_uri,
-							      el_id: "shacl-" + utils.generateQuickGuid()});
-	    this.diagram.current.set_nodes([new_class_uri, o]);
+	    let o = this.shacl_class_view_factory.get_object(new_class_uri);
+	    this.diagram.current.set_nodes([[new_class_uri, o]]);
 	    this.diagram.current.refresh();
 	});
     }
@@ -174,7 +178,7 @@ export default class SHACLDiagram extends React.Component {
 
     render() {
 	return (<div>
-		<button onClick={() => this.add_shacl_class()}>ADD CLASS</button>
+		<button onClick={() => this.add_class()}>ADD CLASS</button>
 		<button onClick={() => this.apply_layout()}>layout</button>
 		<input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		<input type="text" value={this.state.class_uris.join(",")}></input>
