@@ -27,10 +27,10 @@ function renderSomething(instance, container) {
   });
 }
 
-class RDFDiagramCell {
-    constructor(cell_view_component) {
-	this.cell = null;
-	this.cell_view_component = cell_view_component;
+class RDFDiagramNode {
+    constructor(node_component) {
+	this.cell = null; // mxGraph cell
+	this.node_component = node_component; // react component representing node
     }
 
     add_to_diagram(rdf_diagram) {
@@ -51,7 +51,7 @@ export default class RDFDiagram extends React.Component {
     constructor(props) {
 	super(props);
 	this.graph = null;
-	this.uri_cells = {}; // uri -> RDFDiagramCell
+	this.nodes = {}; // uri -> RDFDiagramNode
     }
     
     shouldComponentUpdate() {
@@ -83,11 +83,11 @@ export default class RDFDiagram extends React.Component {
 	    graph.gridSize = 40;
 	    //graph.getModel().addListener(mxEvent.CHANGE, (sender, event) => { console.log("CHANGE:", sender, event) });
 
-	    graph.getLabel = this.__generate_cell_conect.bind(this);
+	    graph.getLabel = this.__generate_cell_content.bind(this);
 	}
     }
     
-    __generate_cell_conect(cell) {
+    __generate_cell_content(cell) {
 	let ret = null;
 	if (cell.isEdge()) {
 	    ret = cell.value;
@@ -95,15 +95,15 @@ export default class RDFDiagram extends React.Component {
 	    // generate_cell_content may be called more than once
 	    // dom element with el_id created and populated during
 	    // first call only
-	    let el = document.getElementById(cell.value.cell_view_component.props.el_id);
+	    let el = document.getElementById(cell.value.node_component.props.el_id);
 	    if (!el) {
 		el = document.createElement("div");		    
-		el.setAttribute("id", cell.value.cell_view_component.props.el_id);
-		renderSomething(cell.value.cell_view_component, el).then(() => {
+		el.setAttribute("id", cell.value.node_component.props.el_id);
+		renderSomething(cell.value.node_component, el).then(() => {
 		    //console.log("renderSomething.then", cell);
 		    //debugger;
 		    // finding dom element from cell
-		    let u_el_id = cell.value.cell_view_component.props.el_id + "-class-ctrl";
+		    let u_el_id = cell.value.node_component.props.el_id + "-class-ctrl";
 		    let class_ctrl_node = document.getElementById(u_el_id);
 		    if (class_ctrl_node) {
 			let class_ctrl_bb = class_ctrl_node.getBoundingClientRect();
@@ -126,31 +126,21 @@ export default class RDFDiagram extends React.Component {
 	this.graph.insertEdge(parent, null, tag, from_cell.cell, to_cell.cell);
     }
 
-    get_new_uris(uris) {
-	let diagram_uris = new Set(Object.keys(this.uri_cells));
-	return Array.from(new Set(uris.filter(x => !diagram_uris.has(x))));
-    }
-    
-    set_uri_cells(uri_cells) {
-	for (let [uri, uri_cell_component] of uri_cells) {
-	    if (!(uri in this.uri_cells)) {
-		this.uri_cells[uri] = new RDFDiagramCell(uri_cell_component);
-	    }
+    set_nodes(nodes) {
+	for (let [uri, node_component] of nodes) {
+	    this.nodes[uri] = new RDFDiagramNode(node_component);
 	}
     }
 
-    remove_uri_cells(uris) {
-    }
-    
     set_diagram(rdf_graph) {
 	this.rdf_graph = rdf_graph;
     }
 
     refresh() {
 	this.graph.getModel().beginUpdate();
-	for (let [new_uri, new_uri_cell] of Object.entries(this.uri_cells)) {
-	    if (!new_uri_cell.cell) {
-		new_uri_cell.add_to_diagram(this);
+	for (let [uri, node] of Object.entries(this.nodes)) {
+	    if (!node.cell) {
+		node.add_to_diagram(this);
 	    }
 	}
 
@@ -158,9 +148,9 @@ export default class RDFDiagram extends React.Component {
 	for (let i = 0; i < triples.length; i++) {
 	    let subj = triples[i].subject.id;
 	    let obj = triples[i].object.id;
-	    if (subj in this.uri_cells && obj in this.uri_cells) {
-		let from_cell = this.uri_cells[triples[i].subject.id];
-		let to_cell = this.uri_cells[triples[i].object.id];
+	    if (subj in this.nodes && obj in this.nodes) {
+		let from_cell = this.nodes[triples[i].subject.id];
+		let to_cell = this.nodes[triples[i].object.id];
 		this.__add_arrow(from_cell, to_cell, utils.compact_uri(triples[i].predicate.id));
 	    }
 	}
