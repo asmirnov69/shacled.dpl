@@ -51,13 +51,13 @@ export default class SHACLClassView extends React.Component {
 	} else {
 	    heading = (<td><b>{this.props.class_name}</b></td>);
 	}
-	
+
 	return (
 		<table id={class_ctrl_id}>
 		 <tbody>
 		<tr>{heading}
 		 <td><input type="button" value="++" onClick={()=>this.props.top_app.class_editor_dialog_ref.current.show_dialog(this.props.class_name)}/></td>
-		 <td><input type="button" value="S"/></td>
+		 <td><input type="button" value="hide" onClick={()=>this.props.on_class_uri_del(this.props.class_name)}/></td>
 		  </tr>
 	        {class_details_pre}
 	        <tr><td>{subclass_uris}</td></tr>

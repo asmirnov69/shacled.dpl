@@ -49,13 +49,12 @@ class SHACLClassViewFactory {
 		this.class_details[r.class_uri.id].push(r);
 	    }
 
-	    debugger;
 	    Object.keys(this.class_details).forEach(class_uri => {
 		let new_node_props = {diagram: this.shacl_diagram.diagram.current,
 				      top_app: this.shacl_diagram.props.top_app,
 				      cell: null,
 				      on_class_uri_add: (new_class_uri)=> this.shacl_diagram.on_class_uri_add(new_class_uri),
-				      on_class_uri_del: (del_class_uri)=>console.log("del url:", del_class_uri)};
+				      on_class_uri_del: (del_class_uri)=> this.shacl_diagram.on_class_hide(del_class_uri)};
 		let o = (<SHACLClassView
 			 class_name={class_uri}
 			 class_details={this.class_details[class_uri]}
@@ -76,7 +75,7 @@ class SHACLClassViewFactory {
 export default class SHACLDiagram extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {class_uris: ['testdb:Equity']}
+	this.state = {class_uris: new Set(['testdb:Equity'])};
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 	this.shacl_class_view_factory = new SHACLClassViewFactory(this, this.fuseki_prx);
 	this.diagram = React.createRef();
@@ -86,6 +85,7 @@ export default class SHACLDiagram extends React.Component {
 	this.new_classname = React.createRef();
 
 	this.on_class_uri_add = this.on_class_uri_add.bind(this);
+	this.on_class_hide = this.on_class_hide.bind(this);
     }
 
     componentDidMount() {
@@ -95,7 +95,7 @@ export default class SHACLDiagram extends React.Component {
     }
 
     load_classes() {
-	let class_uris = this.state.class_uris;
+	let class_uris = Array.from(this.state.class_uris);
 	let db_uri_scheme = this.props.db_uri_scheme;
 	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
 	let rq_diagram = `
@@ -112,8 +112,13 @@ export default class SHACLDiagram extends React.Component {
         }`;
 
 	let new_uris = class_uris.filter(x => !(x in this.diagram.current.nodes));
+	let todel_uris = Object.keys(this.diagram.current.nodes).filter(x => !(this.state.class_uris.has(x)));
+	console.log("class_uris:", class_uris);
+	console.log("new_uris:", new_uris);
+	console.log("todel_uris:", todel_uris);
 	let new_nodes = new_uris.map(x => [x, this.shacl_class_view_factory.get_object(x)]);
 	this.diagram.current.set_nodes(new_nodes);
+	this.diagram.current.remove_nodes(todel_uris);
 
 	this.fuseki_prx.construct(rq_diagram).then(rq_res_ => {
 	    let rq_res = utils.to_n3_model(rq_res_);
@@ -160,10 +165,16 @@ export default class SHACLDiagram extends React.Component {
     on_class_uri_add(new_class_uri) {
 	console.log("new uri:", new_class_uri);
 	let new_state = this.state;
-	new_state.class_uris.push(new_class_uri);
+	new_state.class_uris.add(new_class_uri);
 	this.setState(new_state, () => this.load_classes());	
     }
 
+    on_class_hide(class_uri) {
+	let new_state = this.state;
+	new_state.class_uris.delete(class_uri);
+	this.setState(new_state, () => this.load_classes());		
+    }
+    
     apply_layout() {
 	this.diagram.current.apply_layout();
     }
@@ -181,7 +192,7 @@ export default class SHACLDiagram extends React.Component {
 		<button onClick={() => this.add_class()}>ADD CLASS</button>
 		<button onClick={() => this.apply_layout()}>layout</button>
 		<input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
-		<input type="text" value={this.state.class_uris.join(",")}></input>
+		<input type="text" value={Array.from(this.state.class_uris).join(",")}></input>
 		<button onClick={() => this.remove()}>DEL</button>
 		<RDFDiagram ref={this.diagram}/>
 	        </div>);

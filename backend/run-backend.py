@@ -1,7 +1,7 @@
 #import ipdb
 import sys, os
 os.environ['JAVA_HOME'] = '/usr/lib/jvm/java-11-openjdk-amd64'
-os.environ['JENA_HOME'] = '/home/asmirnov/Downloads/apache-jena-3.10.0'
+os.environ['JENA_HOME'] = '/home/asmirnov/Downloads/apache-jena-3.13.1'
 os.environ['SHACL_HOME'] = '/home/asmirnov/Downloads/shacl-1.3.1'
 import prctl, signal
 import json

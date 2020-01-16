@@ -31,6 +31,7 @@ class RDFDiagramNode {
     constructor(node_component) {
 	this.cell = null; // mxGraph cell
 	this.node_component = node_component; // react component representing node
+	this.mark_to_remove = false;
     }
 
     add_to_diagram(rdf_diagram) {
@@ -43,7 +44,9 @@ class RDFDiagramNode {
     }
 
     remove_from_diagram(rdf_diagram) {
-	rdf_diagram.graph.removeCell(this.cell);
+	//debugger;
+	rdf_diagram.graph.removeCells([this.cell], true);
+	this.cell = null;
     }
 };
 
@@ -132,16 +135,31 @@ export default class RDFDiagram extends React.Component {
 	}
     }
 
+    remove_nodes(node_uris) {
+	for (let node_uri of node_uris) {
+	    this.nodes[node_uri].mark_to_remove = true;
+	}	    
+    }
+    
     set_diagram(rdf_graph) {
 	this.rdf_graph = rdf_graph;
     }
 
     refresh() {
 	this.graph.getModel().beginUpdate();
+	let todel_node_uris = [];
 	for (let [uri, node] of Object.entries(this.nodes)) {
-	    if (!node.cell) {
+	    if (node.mark_to_remove) {
+		node.remove_from_diagram(this);
+		node.mark_to_remove = false;
+		todel_node_uris.push(uri);
+	    } else if (!node.cell) {
 		node.add_to_diagram(this);
 	    }
+	}
+
+	for (let uri of todel_node_uris) {
+	    delete this.nodes[uri];
 	}
 
 	let triples = this.rdf_graph.getQuads();
