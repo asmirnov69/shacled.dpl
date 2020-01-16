@@ -1,0 +1,36 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<testdb:Security> rdf:type rdfs:Class.
+<testdb:Currency> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
+<testdb:Equity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
+<testdb:ETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+<testdb:PlainEquity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+
+<testdb:ShaclDef-Class1>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:Security>;
+	sh:property [ sh:path <testdb:name>; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+	sh:property [ sh:path <testdb:longName>; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ].
+	
+<testdb:ShaclDef-Class2>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:Currency>;
+	sh:property [ sh:path <testdb:isoCode>; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ].
+
+<testdb:ShaclDef-Class3>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:Equity>;
+	sh:property [ sh:path <testdb:ticker>; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ];
+        sh:property [ sh:path <testdb:currency>; sh:minCount 1; sh:maxCount 1; sh:class <testdb:Currency> ];
+	sh:property [ sh:path <testdb:sector>; sh:minCount 1; sh:maxCount 1; sh:datatype xsd:string ].
+
+<testdb:ShaclDef-Class4>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:PlainEquity>.
+	
+<testdb:ShaclDef-Class5>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:ETF>.

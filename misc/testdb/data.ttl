@@ -1,0 +1,22 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+<testdb:Security> rdf:type rdfs:Class.
+<testdb:Currency> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
+<testdb:Equity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
+<testdb:ETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+<testdb:PlainEquity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+
+<testdb:USD> rdf:type <testdb:Currency>;
+	     <testdb:name> "USD"; <testdb:longName> "US dollar"; <testdb:isoCode> "USD".
+<testdb:IBM> rdf:type <testdb:PlainEquity>;
+	     <testdb:name> "IBM"; <testdb:longName> "IBM Corp Common";
+	     <testdb:ticker> "IBM"; <testdb:currency> <testdb:USD>;
+	     <testdb:sector> "Technology".
+<testdb:MSFT> rdf:type <testdb:PlainEquity>;
+	     <testdb:name> "MSFT"; <testdb:longName> "MSFT Corp Common";
+	     <testdb:ticker> "MSFT"; <testdb:currency> <testdb:USD>;
+	     <testdb:sector> "Technology".
+
