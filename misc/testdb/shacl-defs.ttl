@@ -6,8 +6,10 @@
 <testdb:Security> rdf:type rdfs:Class.
 <testdb:Currency> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
 <testdb:Equity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
-<testdb:ETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
 <testdb:PlainEquity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+<testdb:ETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+<testdb:PlainETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:ETF>.
+<testdb:CurrencyETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:ETF>.
 
 <testdb:ShaclDef-Class1>
 	rdf:type sh:NodeShape;
@@ -34,3 +36,23 @@
 <testdb:ShaclDef-Class5>
 	rdf:type sh:NodeShape;
 	sh:targetClass <testdb:ETF>.
+
+<testdb:ShaclDef-Class6>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:PlainETF>.
+
+<testdb:ShaclDef-Class7>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:CurrencyETF>.
+
+# ................................
+
+<testdb:FXReporting> rdf:type rdfs:Class.
+<testdb:Currency> rdfs:subClassOf <testdb:FXReporting>.
+<testdb:CurrencyETF> rdfs:subClassOf <testdb:FXReporting>.
+
+<testdb:ShaclDef-Class61>
+	rdf:type sh:NodeShape;
+	sh:targetClass <testdb:FXReporting>;
+	sh:property [ sh:path <testdb:FXReporting#name>; sh:datatype xsd:string; sh:minCount 1; sh:maxCount 1 ];
+	sh:property [ sh:path <testdb:officialAssetName>; sh:datatype xsd:string; sh:minCount 1; sh:maxCount 1 ].

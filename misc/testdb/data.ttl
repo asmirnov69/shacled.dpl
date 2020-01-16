@@ -6,8 +6,15 @@
 <testdb:Security> rdf:type rdfs:Class.
 <testdb:Currency> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
 <testdb:Equity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Security>.
-<testdb:ETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
 <testdb:PlainEquity> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+<testdb:ETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:Equity>.
+<testdb:PlainETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:ETF>.
+<testdb:CurrencyETF> rdf:type rdfs:Class; rdfs:subClassOf <testdb:ETF>.
+
+<testdb:FXReporting> rdf:type rdfs:Class.
+<testdb:Currency> rdfs:subClassOf <testdb:FXReporting>.
+<testdb:CurrencyETF> rdfs:subClassOf <testdb:FXReporting>.
+
 
 <testdb:USD> rdf:type <testdb:Currency>;
 	     <testdb:name> "USD"; <testdb:longName> "US dollar"; <testdb:isoCode> "USD".
