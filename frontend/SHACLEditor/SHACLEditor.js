@@ -7,6 +7,7 @@ import DataSheet from './DataSheet.js';
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
+	this.shacl_diagram_ref = React.createRef();
 	this.class_editor_dialog_ref = React.createRef();
     }
 
@@ -18,8 +19,8 @@ export default class SHACLEditor extends React.Component {
 		 <HierarchyView communicator={this.props.communicator} top_app={this}/>
 		</div>
 		<div style={{backgroundColor: "cyan"}}>
-		<SHACLDiagram communicator={this.props.communicator} top_app={this} db_uri_scheme="testdb"/>
-		<SHACLClassEditorDialog ref={this.class_editor_dialog_ref}/>
+		<SHACLDiagram ref={this.shacl_diagram_ref} communicator={this.props.communicator} top_app={this} db_uri_scheme="testdb"/>
+		<SHACLClassEditorDialog ref={this.class_editor_dialog_ref} top_app={this}/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>
 		<DataSheet/>
