@@ -14,6 +14,10 @@ class SHACLClassViewFactory {
 	this.shacl_class_views = {}; // uri -> SHACLClassView
     }
 
+    get_superclasses(class_uri) {
+	return this.class_details[class_uri].filter(x => x.superclass_uri != null).map(x => x.superclass_uri.id);
+    }
+    
     refresh(class_uris) {
 	let values_class_uris = '';
 	if (class_uris) {
