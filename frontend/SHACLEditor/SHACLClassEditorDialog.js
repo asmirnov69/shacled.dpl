@@ -35,10 +35,10 @@ export default class SHACLClassEditorDialog extends React.Component {
 	let member_rows = null;
 	let superclasses = null;
 	if (this.props.top_app.shacl_diagram_ref.current) {
-	    let class_details = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.class_details[this.state.class_uri];
 	    debugger;
-	    superclasses = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.get_superclasses(this.state.class_uri).map(x => (<Chip label={x} onDelete={() => {return}}/>));
-	    member_rows = class_details.filter(x => x.mpath != null).map(x => this.__get_member_row(x));
+	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views[this.state.class_uri].props.self;
+	    superclasses = shacl_class_view.get_superclass_uris().map(x => (<Chip label={x} onDelete={() => {return}}/>));
+	    member_rows = shacl_class_view.get_members().map(x => this.__get_member_row(x));
 	}
 
 	
