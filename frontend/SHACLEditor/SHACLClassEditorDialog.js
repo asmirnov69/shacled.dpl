@@ -7,9 +7,11 @@ import * as utils from './utils.js';
 export default class SHACLClassEditorDialog extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {class_uri: null, dialog_open: false, new_member: ""};
+	this.state = {class_uri: null, dialog_open: false, subdialog_open: false, new_member: ""};
 
 	this.__add_new_member = this.__add_new_member.bind(this);
+	this.__add_superclass = this.__add_superclass.bind(this);
+	this.__remove_member = this.__remove_member.bind(this);
     }
 
     show_dialog(class_uri) {
@@ -27,11 +29,47 @@ export default class SHACLClassEditorDialog extends React.Component {
 		        <option value="class">{"class"}</option>
 		       </select></td>
 		   <td><input type="text" style={{borderWidth: "0px"}} value={object_type} onChange={this.set_object_type}/></td>
-		   <td><button>X</button></td>
+		   <td><button onClick={() => this.__remove_member(r)}>X</button></td>
 		   </tr>);
 	return ret;
     }
 
+
+    __remove_member(member) {
+	let member_name = "<" + member.mpath.id + ">";
+	let class_uri = "<" + this.state.class_uri + ">";
+	let rq = `delete {
+                   graph <testdb:shacl-defs> {
+                    ?member ?p ?o
+                   }
+                  } where {
+                   graph <testdb:shacl-defs> {
+                    bind(${class_uri} as ?class_uri)
+                    bind(${member_name} as ?member_name)
+                    ?class_shape sh:targetClass ?class_uri; sh:property ?member.
+                    ?member sh:path ?member_name.
+                    ?member ?p ?o
+                    }
+                  }`
+	console.log("__remove_member:", rq);
+	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	fuseki_prx.update(rq).then(() => {
+	    // refresh shacl class view factory
+	    debugger;
+	    return this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.refresh([this.state.class_uri]);
+	}).then(() => {
+	    debugger;
+	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];	    
+	    this.setState({new_member: ""}, () => {
+		this.props.top_app.shacl_diagram_ref.current.load_classes();
+		let c_state = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].state;
+		this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].forceUpdate();
+		//this.props.top_app.shacl_diagram_ref.current.diagram.current.fit_cell_content(this.state.class_uri);
+		console.log('diagram refreshed');
+	    });
+	});
+    }
+	
     __add_new_member() {
 	// if (this.state.new_member in ... -- check if such member already exists
 	let member_uri = utils.get_uri("testdb", utils.generateQuickGuid());
@@ -49,6 +87,7 @@ export default class SHACLClassEditorDialog extends React.Component {
                       ?class_shape sh:targetClass ${class_uri}
                     }
                   }`;
+
 	console.log("__add_new_member:", rq);
 	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
 	fuseki_prx.update(rq).then(() => {
@@ -67,6 +106,11 @@ export default class SHACLClassEditorDialog extends React.Component {
 	    });
 	});
     }
+
+    __add_superclass() {
+	console.log("__add_superclass");
+	this.setState({subdialog_open: true});
+    }
     
     render() {
 	let member_rows = null;
@@ -79,9 +123,14 @@ export default class SHACLClassEditorDialog extends React.Component {
 
 	
 	return (
-	    	<Dialog onClose={(v) => { this.setState({...this.state, dialog_open: false}); }} aria-labelledby="simple-dialog-title" open={this.state.dialog_open}>
+	    	<Dialog onClose={(v) => { this.setState({dialog_open: false}); }} aria-labelledby="simple-dialog-title" open={this.state.dialog_open}>
 		<DialogTitle>{this.state.class_uri}</DialogTitle>
-		<div>{superclasses}<button>add</button></div>
+
+		 <Dialog onClose={(v) => { this.setState({subdialog_open: false}); }} aria-labelledby="simple-dialog-title" open={this.state.subdialog_open}>
+		 <DialogTitle>subdialog</DialogTitle>
+		 </Dialog>
+		 
+		<div>{superclasses}<button onClick={this.__add_superclass}>add</button></div>
 		<br/>
 		<table>
 		<tbody>
