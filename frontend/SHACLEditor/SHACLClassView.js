@@ -6,7 +6,8 @@ export class SHACLClassViewFactory {
     constructor(shacl_diagram, fuseki_prx) {
 	this.shacl_diagram = shacl_diagram;
 	this.fuseki_prx = fuseki_prx;
-	this.shacl_class_views = {}; // uri -> SHACLClassView element, use props.self to get access to object itself
+	this.shacl_class_views = {}; // uri -> SHACLClassView element
+	this.shacl_class_views_objs = {}; // uri -> SHCALClassView object from inside of element
     }
 
     refresh(class_uris) {
@@ -46,17 +47,21 @@ export class SHACLClassViewFactory {
 	    }
 
 	    Object.keys(class_details).forEach(class_uri => {
-		let new_node_props = {diagram: this.shacl_diagram.diagram.current,
-				      top_app: this.shacl_diagram.props.top_app,
-				      cell: null,
-				      on_class_uri_add: (new_class_uri)=> this.shacl_diagram.on_class_uri_add(new_class_uri),
-				      on_class_uri_del: (del_class_uri)=> this.shacl_diagram.on_class_hide(del_class_uri)};
-		let o = (<SHACLClassView
-			 class_uri={class_uri}
-			 class_details={class_details[class_uri]}
-			 el_id={"shacl-" + utils.generateQuickGuid()}
-			 {...new_node_props}/>);
-		this.shacl_class_views[class_uri] = o;
+		if (class_uri in this.shacl_class_views) {
+		    this.shacl_class_views_objs[class_uri].props.class_details = class_details[class_uri];
+		} else {
+		    let new_node_props = {diagram: this.shacl_diagram.diagram.current,
+					  top_app: this.shacl_diagram.props.top_app,
+					  cell: null,
+					  on_class_uri_add: (new_class_uri)=> this.shacl_diagram.on_class_uri_add(new_class_uri),
+					  on_class_uri_del: (del_class_uri)=> this.shacl_diagram.on_class_hide(del_class_uri)};
+		    let o = (<SHACLClassView ref={(r) => this.shacl_class_views_objs[class_uri] = r}
+			     class_uri={class_uri}
+			     class_details={class_details[class_uri]}
+			     el_id={"shacl-" + utils.generateQuickGuid()}
+			     {...new_node_props}/>);
+		    this.shacl_class_views[class_uri] = o;
+		}
 	    });
 		    
 	    return Promise.resolve();
@@ -71,12 +76,9 @@ export class SHACLClassViewFactory {
 export class SHACLClassView extends React.Component {
     constructor(props) {
 	super(props);
-	this.props.self = this;
 	this.on_member_class_click = this.on_member_class_click.bind(this);
 	this.on_superclass_click = this.on_superclass_click.bind(this);
 	this.on_subclass_click = this.on_subclass_click.bind(this);
-
-	this.get_superclass_uris = this.get_superclass_uris.bind(this);
     }
 
     get_superclass_uris() {

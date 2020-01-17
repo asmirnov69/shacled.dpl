@@ -40,7 +40,7 @@ class FusekiConnection:
     def select(self, rq):
         print "Fuseki::select:", rq
         rq_res = self.fuseki_conn.select(rq)
-        print "Fuseki::select res:", rq_res
+        print "Fuseki::select res:"
         ret = {}
         for col in rq_res.columns:
             ret[col] = to_json_UBL(rq_res.loc[:, col])
@@ -49,10 +49,10 @@ class FusekiConnection:
     def update(self, rq):
         print "Fuseki::update:", rq
         self.fuseki_conn.update(rq)
-        print "DONE Fuseki::update:", rq
+        print "DONE Fuseki::update:"
         
     def construct(self, rq):
         print "Fuseki::construct:", rq
         rq_res = self.fuseki_conn.construct(rq)
-        print "Fuseki::construct res:", rq_res
+        print "Fuseki::construct res:"
         return map(lambda row: map(to_UBL, row), rq_res)
