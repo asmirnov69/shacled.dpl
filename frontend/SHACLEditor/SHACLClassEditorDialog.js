@@ -1,17 +1,101 @@
 import React from "react";
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import Chip from '@material-ui/core/Chip';
 import * as utils from './utils.js';
+
+class MyChip extends React.Component {
+    constructor(props) {
+	super(props);
+    }
+    render() {
+	return (<div>{this.props.label}<button onClick={() => this.props.onDelete(this.props.label)}>x</button></div>);
+    }
+};
+	
+
+class SuperClassChooser extends React.Component {
+    constructor(props) {
+	super(props);
+	this.state = {superclass_uri: null}
+	this.add_superclass = this.add_superclass.bind(this);
+    }
+
+    add_superclass() {
+	let class_uri = "<" + this.props.dialog.state.class_uri + ">";
+	let superclass_uri = "<" + this.state.superclass_uri + ">";
+	let rq = `insert {
+                     graph <testdb:shacl-defs> { ?class_uri rdfs:subClassOf ?superclass_uri }
+                     ?class_uri rdfs:subClassOf ?superclass_uri
+                  } where {
+                    bind(${class_uri} as ?class_uri)
+                    bind(${superclass_uri} as ?superclass_uri)
+                  }`;
+        console.log("add_superclass:", rq);                      
+	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
+	this.props.dialog.setState({subdialog_open: false});
+    }
+    
+    render() {
+	return (<div>
+		<input type="text" value={this.state.superclass_uri} onChange={e => this.setState({superclass_uri: e.target.value})}/>
+		<button onClick={this.add_superclass}>add</button>
+	       </div>);
+    }
+};
+
+class MemberEditor extends React.Component {
+    constructor(props) {
+	super(props);
+	this.state = {member_name: this.props.member_name}
+
+	this.__update_member = this.__update_member.bind(this);
+    }
+
+    __update_member() {
+	let class_uri = "<" + this.props.dialog.state.class_uri + ">";
+	let old_member_path = "<" + this.props.member_name + ">";
+	let member_path = "<" + this.state.member_name + ">";
+	let rq = `delete {
+                    graph <testdb:shacl-defs> {
+                      ?member sh:path ?old_member_path
+                    }
+                  } insert {
+                    graph <testdb:shacl-defs> {
+                      ?member sh:path ?member_path
+                    }
+                  } where {
+                    bind(${class_uri} as ?class_uri)
+                    bind(${member_path} as ?member_path)
+                    bind(${old_member_path} as ?old_member_path)
+                    graph <testdb:shacl-defs> {                      
+                      ?class_shape sh:targetClass ?class_uri; sh:property ?member.
+                      ?member sh:path ?old_member_path
+                    }
+                  }`
+	console.log("__update_member:", rq);
+	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
+	this.props.dialog.setState({subdialog_open: false});
+    }
+    
+    render() {
+	return (<table><tbody><tr>
+		<td><input type="text" value={this.state.member_name} onChange={e => this.setState({member_name: e.target.value})}/></td><td><button onClick={this.__update_member}>update</button></td>
+		</tr></tbody></table>);
+    }
+};
 
 export default class SHACLClassEditorDialog extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {class_uri: null, dialog_open: false, subdialog_open: false, new_member: ""};
+	this.state = {class_uri: null, new_member: "", dialog_open: false, subdialog_open: false, subdialog_component: null};
 
 	this.__add_new_member = this.__add_new_member.bind(this);
 	this.__add_superclass = this.__add_superclass.bind(this);
 	this.__remove_member = this.__remove_member.bind(this);
+	this.__edit_member = this.__edit_member.bind(this);
+	this.__remove_superclass = this.__remove_superclass.bind(this);
     }
 
     show_dialog(class_uri) {
@@ -22,19 +106,29 @@ export default class SHACLClassEditorDialog extends React.Component {
 	let is_literal = r.mdt != null;
 	let object_type = r.mdt != null ? r.mdt.id : r.mclass.id;
 	let ret = (<tr key={utils.generateQuickGuid()}>
-		   <td><input type="text" tyle={{borderWidth: "0px"}} value={r.mpath.id} onChange={null}/></td>
-		   <td><select value={is_literal ? "datatype" : "class"} style={{borderWidth: "0px"}}
-		               onChange={this.set_is_object_literal}>
-		        <option value="datatype">datatype</option>
-		        <option value="class">{"class"}</option>
-		       </select></td>
-		   <td><input type="text" style={{borderWidth: "0px"}} value={object_type} onChange={this.set_object_type}/></td>
+		   <td><input type="text" style={{borderWidth: "0px"}} value={r.mpath.id} readonly/></td>
+		   <td><input type="text" value={is_literal ? "datatype" : "class"} style={{borderWidth: "0px"}}/></td>
+		   <td><input type="text" style={{borderWidth: "0px"}} value={object_type} readonly/></td>
+		   <td><button onClick={() => this.__edit_member(r)}>E</button></td>
 		   <td><button onClick={() => this.__remove_member(r)}>X</button></td>
 		   </tr>);
 	return ret;
     }
 
-
+    __refresh_after_update_rq() {
+	this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.refresh([this.state.class_uri]).then(() => {
+	    debugger;
+	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];	    
+	    this.setState({new_member: ""}, () => {
+		this.props.top_app.shacl_diagram_ref.current.load_classes();
+		let c_state = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].state;
+		this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].forceUpdate();
+		//this.props.top_app.shacl_diagram_ref.current.diagram.current.fit_cell_content(this.state.class_uri);
+		console.log('diagram refreshed');
+	    });
+	});	
+    }    
+    
     __remove_member(member) {
 	let member_name = "<" + member.mpath.id + ">";
 	let class_uri = "<" + this.state.class_uri + ">";
@@ -53,23 +147,14 @@ export default class SHACLClassEditorDialog extends React.Component {
                   }`
 	console.log("__remove_member:", rq);
 	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
-	fuseki_prx.update(rq).then(() => {
-	    // refresh shacl class view factory
-	    debugger;
-	    return this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.refresh([this.state.class_uri]);
-	}).then(() => {
-	    debugger;
-	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];	    
-	    this.setState({new_member: ""}, () => {
-		this.props.top_app.shacl_diagram_ref.current.load_classes();
-		let c_state = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].state;
-		this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].forceUpdate();
-		//this.props.top_app.shacl_diagram_ref.current.diagram.current.fit_cell_content(this.state.class_uri);
-		console.log('diagram refreshed');
-	    });
-	});
+	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
-	
+
+    __edit_member(member) {
+	console.log("__edit_member");
+	this.setState({subdialog_open: true, subdialog_component: (<MemberEditor dialog={this} member_name={member.mpath.id}/>)});
+    }
+    
     __add_new_member() {
 	// if (this.state.new_member in ... -- check if such member already exists
 	let member_uri = utils.get_uri("testdb", utils.generateQuickGuid());
@@ -90,26 +175,30 @@ export default class SHACLClassEditorDialog extends React.Component {
 
 	console.log("__add_new_member:", rq);
 	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
-	fuseki_prx.update(rq).then(() => {
-	    // refresh shacl class view factory
-	    debugger;
-	    return this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.refresh([this.state.class_uri]);
-	}).then(() => {
-	    debugger;
-	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];	    
-	    this.setState({new_member: ""}, () => {
-		this.props.top_app.shacl_diagram_ref.current.load_classes();
-		let c_state = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].state;
-		this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].forceUpdate();
-		//this.props.top_app.shacl_diagram_ref.current.diagram.current.fit_cell_content(this.state.class_uri);
-		console.log('diagram refreshed');
-	    });
-	});
+	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
 
     __add_superclass() {
 	console.log("__add_superclass");
-	this.setState({subdialog_open: true});
+	this.setState({subdialog_open: true, subdialog_component: (<SuperClassChooser dialog={this}/>)});
+    }
+
+    __remove_superclass(key) {
+	debugger;
+	console.log("__remove_superclass");
+	let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];
+	let class_uri = "<" + this.state.class_uri + ">";
+	let superclass_uri = "<" + key + ">";
+	let rq = `delete {
+                   graph <testdb:shacl-defs> { ?class_uri rdfs:subClassOf ?superclass_uri }
+                   ?class_uri rdfs:subClassOf ?superclass_uri
+                  } where {
+                    bind(${class_uri} as ?class_uri)
+                    bind(${superclass_uri} as ?superclass_uri)
+                  }`;
+	console.log("__remove_superclass:", rq);
+	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
     
     render() {
@@ -117,7 +206,7 @@ export default class SHACLClassEditorDialog extends React.Component {
 	let superclasses = null;
 	if (this.props.top_app.shacl_diagram_ref.current) {
 	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];
-	    superclasses = shacl_class_view.get_superclass_uris().map(x => (<Chip label={x} onDelete={() => {return}}/>));
+	    superclasses = shacl_class_view.get_superclass_uris().map(x => (<MyChip label={x} onDelete={this.__remove_superclass}/>));
 	    member_rows = shacl_class_view.get_members().map(x => this.__get_member_row(x));
 	}
 
@@ -128,6 +217,7 @@ export default class SHACLClassEditorDialog extends React.Component {
 
 		 <Dialog onClose={(v) => { this.setState({subdialog_open: false}); }} aria-labelledby="simple-dialog-title" open={this.state.subdialog_open}>
 		 <DialogTitle>subdialog</DialogTitle>
+		 {this.state.subdialog_component}
 		 </Dialog>
 		 
 		<div>{superclasses}<button onClick={this.__add_superclass}>add</button></div>
