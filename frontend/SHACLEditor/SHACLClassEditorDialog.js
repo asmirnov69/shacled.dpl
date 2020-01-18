@@ -139,12 +139,12 @@ class ClassPropertyEditor extends React.Component {
 export default class SHACLClassEditorDialog extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {class_uri: null, new_member: "", dialog_open: false, subdialog_open: false, subdialog_component: null};
+	this.state = {class_uri: null, new_class_property_path: "", dialog_open: false, subdialog_open: false, subdialog_component: null};
 
-	this.__add_new_member = this.__add_new_member.bind(this);
+	this.__add_new_class_property = this.__add_new_class_property.bind(this);
 	this.__add_superclass = this.__add_superclass.bind(this);
-	this.__remove_member = this.__remove_member.bind(this);
-	this.__edit_member = this.__edit_member.bind(this);
+	this.__remove_class_property = this.__remove_class_property.bind(this);
+	this.__edit_class_property = this.__edit_class_property.bind(this);
 	this.__remove_superclass = this.__remove_superclass.bind(this);
     }
 
@@ -152,13 +152,13 @@ export default class SHACLClassEditorDialog extends React.Component {
 	this.setState({...this.state, dialog_open: true, class_uri: class_uri});
     }
 
-    __get_member_row(class_property) {
+    __get_class_property_row(class_property) {
 	let ret = (<tr key={utils.generateQuickGuid()}>
 		   <td><input type="text" style={{borderWidth: "0px"}} value={class_property.path_uri} readonly/></td>
 		   <td><input type="text" value={SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_enum_out_str(class_property.value_constr_type)} style={{borderWidth: "0px"}}/></td>
 		   <td><input type="text" style={{borderWidth: "0px"}} value={class_property.value_type_uri} readonly/></td>
-		   <td><button onClick={() => this.__edit_member(class_property)}>E</button></td>
-		   <td><button onClick={() => this.__remove_member(class_property)}>X</button></td>
+		   <td><button onClick={() => this.__edit_class_property(class_property)}>E</button></td>
+		   <td><button onClick={() => this.__remove_class_property(class_property)}>X</button></td>
 		   </tr>);
 	return ret;
     }
@@ -167,7 +167,7 @@ export default class SHACLClassEditorDialog extends React.Component {
 	SHACLClassViewFactory_ston.refresh([this.state.class_uri]).then(() => {
 	    //debugger;
 	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];	    
-	    this.setState({new_member: ""}, () => {
+	    this.setState({new_class_property_path: ""}, () => {
 		this.props.top_app.shacl_diagram_ref.current.load_classes();
 		let c_state = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri].state;
 		shacl_class_view.forceUpdate();
@@ -177,51 +177,51 @@ export default class SHACLClassEditorDialog extends React.Component {
 	});	
     }
     
-    __remove_member(class_property) {
-	let member_name = "<" + class_property.path_uri + ">";
+    __remove_class_property(class_property) {
+	let class_property_path_uri = "<" + class_property.path_uri + ">";
 	let class_uri = "<" + this.state.class_uri + ">";
 	let rq = `delete {
                    graph <testdb:shacl-defs> {
-                    ?member ?p ?o
+                    ?cp ?p ?o
                    }
                   } where {
                    graph <testdb:shacl-defs> {
                     bind(${class_uri} as ?class_uri)
-                    bind(${member_name} as ?member_name)
-                    ?class_shape sh:targetClass ?class_uri; sh:property ?member.
-                    ?member sh:path ?member_name.
-                    ?member ?p ?o
+                    bind(${class_property_path_uri} as ?class_property_path_uri)
+                    ?class_shape sh:targetClass ?class_uri; sh:property ?cp.
+                    ?cp sh:path ?class_property_path_uri.
+                    ?cp ?p ?o
                     }
                   }`
-	console.log("__remove_member:", rq);
+	console.log("__remove_class_property:", rq);
 	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
 
-    __edit_member(class_property) {
-	console.log("__edit_member");
+    __edit_class_property(class_property) {
+	console.log("__edit_class_property");
 	this.setState({subdialog_open: true, subdialog_component: (<ClassPropertyEditor dialog={this} class_property={class_property}/>)});
     }
     
-    __add_new_member() {
-	// if (this.state.new_member in ... -- check if such member already exists
-	let member_uri = utils.get_uri("testdb", utils.generateQuickGuid());
-	let member_name = "<" + this.state.new_member + ">";
+    __add_new_class_property() {
+	// if (this.state.new_class_property in ... -- check if such cprop already exists
+	let class_property = utils.get_uri("testdb", utils.generateQuickGuid());
+	let class_property_path = "<" + this.state.new_class_property_path + ">";
 	let class_uri = "<" + this.state.class_uri + ">";
 	let rq = `insert { 
                    graph <testdb:shacl-defs> { 
-                    ?class_shape sh:property ?member.
-                    ?member sh:path ?member_name; sh:datatype xsd:string; sh:minCount 1; sh:maxCount 1
+                    ?class_shape sh:property ?class_property.
+                    ?class_property sh:path ?class_property_path; sh:datatype xsd:string; sh:minCount 1; sh:maxCount 1
                    }
                   } where {
                     graph <testdb:shacl-defs> {
-                      bind(${member_uri} as ?member)
-                      bind(${member_name} as ?member_name)
+                      bind(${class_property} as ?class_property)
+                      bind(${class_property_path} as ?class_property_path)
                       ?class_shape sh:targetClass ${class_uri}
                     }
                   }`;
 
-	console.log("__add_new_member:", rq);
+	console.log("__add_new_class_property:", rq);
 	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
@@ -250,12 +250,12 @@ export default class SHACLClassEditorDialog extends React.Component {
     }
     
     render() {
-	let member_rows = null;
+	let class_property_rows = null;
 	let superclasses = null;
 	if (this.props.top_app.shacl_diagram_ref.current) {
 	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];
 	    superclasses = shacl_class_view.get_superclass_uris().map(x => (<MyChip label={x} onDelete={this.__remove_superclass}/>));
-	    member_rows = shacl_class_view.get_class_properties().map(x => this.__get_member_row(x));
+	    class_property_rows = shacl_class_view.get_class_properties().map(x => this.__get_class_property_row(x));
 	}
 
 	
@@ -273,11 +273,11 @@ export default class SHACLClassEditorDialog extends React.Component {
 		<table>
 		<tbody>
 		<tr><td>
-		<input type="text" value={this.state.new_member}
-	               onChange={e => this.setState({...this.state, new_member:e.target.value})}/>
-		<button disabled={this.state.new_member.length==0} onClick={this.__add_new_member}>add</button>
+		<input type="text" value={this.state.new_class_property_path}
+	               onChange={e => this.setState({...this.state, new_class_property_path: e.target.value})}/>
+		<button disabled={this.state.new_class_property_path.length==0} onClick={this.__add_new_class_property}>add</button>
 		</td></tr>
-		{member_rows}
+		{class_property_rows}
 		</tbody>
 		</table>
 		</Dialog>
