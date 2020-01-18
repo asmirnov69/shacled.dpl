@@ -71,7 +71,7 @@ export default class SHACLDiagram extends React.Component {
 	
 	//let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
 	let new_class_uri = "testdb:" + class_name;
-	if (new_class_uri in this.shacl_class_view_factory.class_details) {
+	if (new_class_uri in this.shacl_class_view_factory.shacl_class_views) {
 	    alert("such class is already defined");
 	    return;
 	}

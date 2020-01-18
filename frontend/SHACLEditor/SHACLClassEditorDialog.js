@@ -11,7 +11,29 @@ class MyChip extends React.Component {
 	return (<div>{this.props.label}<button onClick={() => this.props.onDelete(this.props.label)}>x</button></div>);
     }
 };
-	
+
+class DropdownList extends React.Component {
+    constructor(props) {
+	super(props);
+	this.state = {value: this.props.value};
+	this.on_change = this.on_change.bind(this);
+    }
+
+    on_change(evt) {
+	this.setState({value: evt.target.value}, () => {
+	    if (this.props.onChange) {
+		this.props.onChange(this.state.value);
+	    }
+	});
+    }
+    
+    render() {
+	let option_values = this.props.items.map(x => (<option value={x}>{x}</option>));
+	return (<select style={{borderWidth: "0px"}} value={this.state.value} onChange={this.on_change}>
+		{option_values}
+		</select>);
+    }
+};
 
 class SuperClassChooser extends React.Component {
     constructor(props) {
@@ -47,7 +69,7 @@ class SuperClassChooser extends React.Component {
 class MemberEditor extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {member_name: this.props.member_name}
+	this.state = {member_name: this.props.member_name, m_spec_type: this.props.m_spec_type, m_type: this.props.m_type}
 
 	this.__update_member = this.__update_member.bind(this);
     }
@@ -56,21 +78,26 @@ class MemberEditor extends React.Component {
 	let class_uri = "<" + this.props.dialog.state.class_uri + ">";
 	let old_member_path = "<" + this.props.member_name + ">";
 	let member_path = "<" + this.state.member_name + ">";
+	let m_spec_type = 'sh:' + this.state.m_spec_type;
+	let m_type = "<" + this.state.m_type + ">";
 	let rq = `delete {
                     graph <testdb:shacl-defs> {
-                      ?member sh:path ?old_member_path
+                      ?member ?old_m_pred ?old_m_obj
                     }
                   } insert {
                     graph <testdb:shacl-defs> {
-                      ?member sh:path ?member_path
+                      ?member sh:path ?member_path; ?m_spec_type ?m_type; sh:minCount 1; sh:maxCount 1
                     }
                   } where {
                     bind(${class_uri} as ?class_uri)
                     bind(${member_path} as ?member_path)
                     bind(${old_member_path} as ?old_member_path)
+                    bind(${m_spec_type} as ?m_spec_type)
+                    bind(${m_type} as ?m_type)
                     graph <testdb:shacl-defs> {                      
                       ?class_shape sh:targetClass ?class_uri; sh:property ?member.
-                      ?member sh:path ?old_member_path
+                      ?member sh:path ?old_member_path.
+                      ?member ?old_m_pred ?old_m_obj
                     }
                   }`
 	console.log("__update_member:", rq);
@@ -78,10 +105,27 @@ class MemberEditor extends React.Component {
 	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
     }
+
+    __get_classes() {
+	return Object.keys(this.props.dialog.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views);
+    }
+
+    __get_datatypes() {
+	let xsd = "http://www.w3.org/2001/XMLSchema#"
+	return ["string", "int"].map(x => xsd + x);
+    }
     
     render() {
 	return (<table><tbody><tr>
-		<td><input type="text" value={this.state.member_name} onChange={e => this.setState({member_name: e.target.value})}/></td><td><button onClick={this.__update_member}>update</button></td>
+		<td><input type="text" value={this.state.member_name}
+		           onChange={e => this.setState({member_name: e.target.value})}/></td>
+		<td><DropdownList items={["datatype", "class"]}
+		                  value={this.state.m_spec_type}
+		                  onChange={v => this.setState({m_spec_type: v})}/></td>
+		<td><DropdownList items={this.state.m_spec_type == "datatype" ? this.__get_datatypes() : this.__get_classes()}
+		                  value={this.state.m_type}
+		                  onChange={v => this.setState({m_type: v})}/></td>
+		<td><button onClick={this.__update_member}>update</button></td>
 		</tr></tbody></table>);
     }
 };
@@ -152,7 +196,10 @@ export default class SHACLClassEditorDialog extends React.Component {
 
     __edit_member(member) {
 	console.log("__edit_member");
-	this.setState({subdialog_open: true, subdialog_component: (<MemberEditor dialog={this} member_name={member.mpath.id}/>)});
+	this.setState({subdialog_open: true,
+		       subdialog_component: (<MemberEditor dialog={this} member_name={member.mpath.id}
+					     m_spec_type={member.mdt ? "datatype" : "class"}
+					     m_type={member.mdt ? member.mdt.id : member.mclass.id}/>)});
     }
     
     __add_new_member() {
