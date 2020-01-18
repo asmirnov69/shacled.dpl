@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom';
 import * as utils from './utils.js';
 
 import RDFDiagram from './RDFDiagram.js';
-import {SHACLClassView, SHACLClassViewFactory} from './SHACLClassView.js';
+import {SHACLValueConstrTypeFactory, SHACLValueConstrTypeFactory_ston} from './SHACLClassProperty.js';
+import {SHACLClassView, SHACLClassViewFactory, SHACLClassViewFactory_ston} from './SHACLClassView.js';
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 
 export default class SHACLDiagram extends React.Component {
@@ -11,7 +12,6 @@ export default class SHACLDiagram extends React.Component {
 	super(props);
 	this.state = {class_uris: new Set(['testdb:Equity'])};
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
-	this.shacl_class_view_factory = new SHACLClassViewFactory(this, this.fuseki_prx);
 	this.diagram = React.createRef();
 	this.add_class = this.add_class.bind(this);
 	this.load_classes = this.load_classes.bind(this);
@@ -23,7 +23,10 @@ export default class SHACLDiagram extends React.Component {
     }
 
     componentDidMount() {
-	this.shacl_class_view_factory.refresh(null).then(() => {
+	SHACLClassViewFactory_ston.set_fuseki_prx(this.fuseki_prx);
+	SHACLClassViewFactory_ston.set_shacl_diagram(this);
+	SHACLClassViewFactory_ston.refresh(null).then(() => {
+	    SHACLValueConstrTypeFactory_ston.refresh(SHACLClassViewFactory_ston);
 	    this.load_classes();
 	});
     }
@@ -50,7 +53,7 @@ export default class SHACLDiagram extends React.Component {
 	console.log("class_uris:", class_uris);
 	console.log("new_uris:", new_uris);
 	console.log("todel_uris:", todel_uris);
-	let new_nodes = new_uris.map(x => [x, this.shacl_class_view_factory.get_object(x)]);
+	let new_nodes = new_uris.map(x => [x, SHACLClassViewFactory_ston.get_object(x)]);
 	this.diagram.current.set_nodes(new_nodes);
 	this.diagram.current.remove_nodes(todel_uris);
 
@@ -71,7 +74,7 @@ export default class SHACLDiagram extends React.Component {
 	
 	//let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
 	let new_class_uri = "testdb:" + class_name;
-	if (new_class_uri in this.shacl_class_view_factory.shacl_class_views) {
+	if (new_class_uri in SHACLClassViewFactory_ston.shacl_class_views) {
 	    alert("such class is already defined");
 	    return;
 	}
@@ -88,9 +91,9 @@ export default class SHACLDiagram extends React.Component {
 	console.log(rq);
 	this.fuseki_prx.update(rq).then(() => {
 	    console.log("insert done");
-	    return this.shacl_class_view_factory.refresh([new_class_uri]);
+	    return SHACLClassViewFactory_ston.refresh([new_class_uri]);
 	}).then(() => {
-	    let o = this.shacl_class_view_factory.get_object(new_class_uri);
+	    let o = SHACLClassViewFactory_ston.get_object(new_class_uri);
 	    this.diagram.current.set_nodes([[new_class_uri, o]]);
 	    this.diagram.current.refresh();
 	});

@@ -1,6 +1,8 @@
 import React from "react";
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import {SHACLClassViewFactory_ston} from './SHACLClassView.js';
+import {SHACLValueConstrTypeFactory_ston} from './SHACLClassProperty.js';
 import * as utils from './utils.js';
 
 class MyChip extends React.Component {
@@ -53,7 +55,7 @@ class SuperClassChooser extends React.Component {
                     bind(${superclass_uri} as ?superclass_uri)
                   }`;
         console.log("add_superclass:", rq);                      
-	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
     }
@@ -66,20 +68,20 @@ class SuperClassChooser extends React.Component {
     }
 };
 
-class MemberEditor extends React.Component {
+class ClassPropertyEditor extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {member_name: this.props.member_name, m_spec_type: this.props.m_spec_type, m_type: this.props.m_type}
+	this.state = {class_property: this.props.class_property}
 
 	this.__update_member = this.__update_member.bind(this);
     }
 
     __update_member() {
 	let class_uri = "<" + this.props.dialog.state.class_uri + ">";
-	let old_member_path = "<" + this.props.member_name + ">";
-	let member_path = "<" + this.state.member_name + ">";
-	let m_spec_type = 'sh:' + this.state.m_spec_type;
-	let m_type = "<" + this.state.m_type + ">";
+	let old_member_path = "<" + this.props.class_property.path_uri + ">";
+	let member_path = "<" + this.state.class_property.path_uri + ">";
+	let m_spec_type = "sh:" + SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_enum_out_str(this.state.class_property.value_constr_type);
+	let m_type = "<" + this.state.class_property.value_type_uri + ">";
 	let rq = `delete {
                     graph <testdb:shacl-defs> {
                       ?member ?old_m_pred ?old_m_obj
@@ -101,30 +103,34 @@ class MemberEditor extends React.Component {
                     }
                   }`
 	console.log("__update_member:", rq);
-	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
-    }
-
-    __get_classes() {
-	return Object.keys(this.props.dialog.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views);
-    }
-
-    __get_datatypes() {
-	let xsd = "http://www.w3.org/2001/XMLSchema#"
-	return ["string", "int"].map(x => xsd + x);
     }
     
     render() {
 	return (<table><tbody><tr>
-		<td><input type="text" value={this.state.member_name}
-		           onChange={e => this.setState({member_name: e.target.value})}/></td>
-		<td><DropdownList items={["datatype", "class"]}
-		                  value={this.state.m_spec_type}
-		                  onChange={v => this.setState({m_spec_type: v})}/></td>
-		<td><DropdownList items={this.state.m_spec_type == "datatype" ? this.__get_datatypes() : this.__get_classes()}
-		                  value={this.state.m_type}
-		                  onChange={v => this.setState({m_type: v})}/></td>
+		<td><input type="text" value={this.state.class_property.path_uri}
+		onChange={e => {
+		    let cp = this.state.class_property;
+		    cp.path_uri = e.target.value;
+		    this.setState({class_property: cp});
+		}}/></td>
+		<td><DropdownList items={SHACLValueConstrTypeFactory_ston.get_value_constr_types_out_str()}
+		                  value={SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_enum_out_str(this.state.class_property.value_constr_type)}
+		onChange={v => {
+		    let cp = this.state.class_property;
+		    cp.value_constr_type = SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_str_out_enum(v);
+		    cp.value_type_uri = SHACLValueConstrTypeFactory_ston.get_value_type_uris(cp.value_constr_type)[0];
+		    this.setState({class_property: cp});
+		}}/></td>
+		<td><DropdownList items={SHACLValueConstrTypeFactory_ston.get_value_type_uris(this.state.class_property.value_constr_type)}
+		                  value={this.state.class_property.value_type_uri}
+		onChange={v => {
+		    let cp = this.state.class_property;
+		    cp.value_type_uri = v;		    
+		    this.setState({class_property: cp});
+		}}/></td>
 		<td><button onClick={this.__update_member}>update</button></td>
 		</tr></tbody></table>);
     }
@@ -146,35 +152,33 @@ export default class SHACLClassEditorDialog extends React.Component {
 	this.setState({...this.state, dialog_open: true, class_uri: class_uri});
     }
 
-    __get_member_row(r) {
-	let is_literal = r.mdt != null;
-	let object_type = r.mdt != null ? r.mdt.id : r.mclass.id;
+    __get_member_row(class_property) {
 	let ret = (<tr key={utils.generateQuickGuid()}>
-		   <td><input type="text" style={{borderWidth: "0px"}} value={r.mpath.id} readonly/></td>
-		   <td><input type="text" value={is_literal ? "datatype" : "class"} style={{borderWidth: "0px"}}/></td>
-		   <td><input type="text" style={{borderWidth: "0px"}} value={object_type} readonly/></td>
-		   <td><button onClick={() => this.__edit_member(r)}>E</button></td>
-		   <td><button onClick={() => this.__remove_member(r)}>X</button></td>
+		   <td><input type="text" style={{borderWidth: "0px"}} value={class_property.path_uri} readonly/></td>
+		   <td><input type="text" value={SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_enum_out_str(class_property.value_constr_type)} style={{borderWidth: "0px"}}/></td>
+		   <td><input type="text" style={{borderWidth: "0px"}} value={class_property.value_type_uri} readonly/></td>
+		   <td><button onClick={() => this.__edit_member(class_property)}>E</button></td>
+		   <td><button onClick={() => this.__remove_member(class_property)}>X</button></td>
 		   </tr>);
 	return ret;
     }
 
     __refresh_after_update_rq() {
-	this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.refresh([this.state.class_uri]).then(() => {
-	    debugger;
-	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];	    
+	SHACLClassViewFactory_ston.refresh([this.state.class_uri]).then(() => {
+	    //debugger;
+	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];	    
 	    this.setState({new_member: ""}, () => {
 		this.props.top_app.shacl_diagram_ref.current.load_classes();
-		let c_state = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].state;
-		this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri].forceUpdate();
+		let c_state = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri].state;
+		shacl_class_view.forceUpdate();
 		//this.props.top_app.shacl_diagram_ref.current.diagram.current.fit_cell_content(this.state.class_uri);
 		console.log('diagram refreshed');
 	    });
 	});	
-    }    
+    }
     
-    __remove_member(member) {
-	let member_name = "<" + member.mpath.id + ">";
+    __remove_member(class_property) {
+	let member_name = "<" + class_property.path_uri + ">";
 	let class_uri = "<" + this.state.class_uri + ">";
 	let rq = `delete {
                    graph <testdb:shacl-defs> {
@@ -190,16 +194,13 @@ export default class SHACLClassEditorDialog extends React.Component {
                     }
                   }`
 	console.log("__remove_member:", rq);
-	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
 
-    __edit_member(member) {
+    __edit_member(class_property) {
 	console.log("__edit_member");
-	this.setState({subdialog_open: true,
-		       subdialog_component: (<MemberEditor dialog={this} member_name={member.mpath.id}
-					     m_spec_type={member.mdt ? "datatype" : "class"}
-					     m_type={member.mdt ? member.mdt.id : member.mclass.id}/>)});
+	this.setState({subdialog_open: true, subdialog_component: (<ClassPropertyEditor dialog={this} class_property={class_property}/>)});
     }
     
     __add_new_member() {
@@ -221,7 +222,7 @@ export default class SHACLClassEditorDialog extends React.Component {
                   }`;
 
 	console.log("__add_new_member:", rq);
-	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
 
@@ -231,9 +232,9 @@ export default class SHACLClassEditorDialog extends React.Component {
     }
 
     __remove_superclass(key) {
-	debugger;
+	//debugger;
 	console.log("__remove_superclass");
-	let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];
+	let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];
 	let class_uri = "<" + this.state.class_uri + ">";
 	let superclass_uri = "<" + key + ">";
 	let rq = `delete {
@@ -244,7 +245,7 @@ export default class SHACLClassEditorDialog extends React.Component {
                     bind(${superclass_uri} as ?superclass_uri)
                   }`;
 	console.log("__remove_superclass:", rq);
-	let fuseki_prx = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.fuseki_prx;
+	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
     
@@ -252,9 +253,9 @@ export default class SHACLClassEditorDialog extends React.Component {
 	let member_rows = null;
 	let superclasses = null;
 	if (this.props.top_app.shacl_diagram_ref.current) {
-	    let shacl_class_view = this.props.top_app.shacl_diagram_ref.current.shacl_class_view_factory.shacl_class_views_objs[this.state.class_uri];
+	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];
 	    superclasses = shacl_class_view.get_superclass_uris().map(x => (<MyChip label={x} onDelete={this.__remove_superclass}/>));
-	    member_rows = shacl_class_view.get_members().map(x => this.__get_member_row(x));
+	    member_rows = shacl_class_view.get_class_properties().map(x => this.__get_member_row(x));
 	}
 
 	

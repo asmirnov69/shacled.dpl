@@ -1,15 +1,24 @@
 import React from "react";
 import ReactDOM from 'react-dom';
+import {ENUMSHACLValueConstrType, SHACLValueConstrTypeFactory_ston, SHACLClassProperty} from './SHACLClassProperty.js';
 import * as utils from './utils.js';
 
 export class SHACLClassViewFactory {
-    constructor(shacl_diagram, fuseki_prx) {
-	this.shacl_diagram = shacl_diagram;
-	this.fuseki_prx = fuseki_prx;
+    constructor() {
+	this.shacl_diagram = null;
+	this.fuseki_prx = null;
 	this.shacl_class_views = {}; // uri -> SHACLClassView element
 	this.shacl_class_views_objs = {}; // uri -> SHCALClassView object from inside of element
     }
 
+    set_shacl_diagram(o) {
+	this.shacl_diagram = o
+    }
+
+    set_fuseki_prx(o) {
+	this.fuseki_prx = o;
+    }
+    
     refresh(class_uris) {
 	let values_class_uris = '';
 	if (class_uris) {
@@ -46,6 +55,7 @@ export class SHACLClassViewFactory {
 		class_details[r.class_uri.id].push(r);
 	    }
 
+	    //console.log("class_details:", class_details);
 	    Object.keys(class_details).forEach(class_uri => {
 		if (class_uri in this.shacl_class_views) {
 		    this.shacl_class_views_objs[class_uri].props.class_details = class_details[class_uri];
@@ -53,8 +63,8 @@ export class SHACLClassViewFactory {
 		    let new_node_props = {diagram: this.shacl_diagram.diagram.current,
 					  top_app: this.shacl_diagram.props.top_app,
 					  cell: null,
-					  on_class_uri_add: (new_class_uri)=> this.shacl_diagram.on_class_uri_add(new_class_uri),
-					  on_class_uri_del: (del_class_uri)=> this.shacl_diagram.on_class_hide(del_class_uri)};
+					  on_class_uri_add: (new_class_uri) => this.shacl_diagram.on_class_uri_add(new_class_uri),
+					  on_class_uri_del: (del_class_uri) => this.shacl_diagram.on_class_hide(del_class_uri)};
 		    let o = (<SHACLClassView ref={(r) => this.shacl_class_views_objs[class_uri] = r}
 			     class_uri={class_uri}
 			     class_details={class_details[class_uri]}
@@ -73,10 +83,12 @@ export class SHACLClassViewFactory {
     }
 };
 
+export let SHACLClassViewFactory_ston = new SHACLClassViewFactory();
+
 export class SHACLClassView extends React.Component {
     constructor(props) {
 	super(props);
-	this.on_member_class_click = this.on_member_class_click.bind(this);
+	this.on_class_property_click = this.on_class_property_click.bind(this);
 	this.on_superclass_click = this.on_superclass_click.bind(this);
 	this.on_subclass_click = this.on_subclass_click.bind(this);
     }
@@ -89,17 +101,26 @@ export class SHACLClassView extends React.Component {
 	return this.props.class_details.filter(x => x.subclass_uri != null).map(x => x.subclass_uri.id);
     }
 
-    get_members() {
-	return this.props.class_details.filter(x => x.subclass_uri == null && x.superclass_uri == null && x.mpath != null);
+    get_class_properties() {
+	return this.props.class_details
+	    .filter(x => x.subclass_uri == null && x.superclass_uri == null && x.mpath != null)
+	    .map(x => {
+		//console.log("x:", x.mpath.id, x.mdt);
+		let vct = x.mdt ? ENUMSHACLValueConstrType.DATATYPE : ENUMSHACLValueConstrType.CLASS;
+		let vt_uri = x.mdt ? x.mdt.id : x.mclass.id;
+		if (!SHACLValueConstrTypeFactory_ston.validate(vct, vt_uri)) {
+		    debugger;
+		    throw "invalid value constr type, value type uri combination";
+		}
+		return new SHACLClassProperty(x.mpath.id, vct, vt_uri);
+	    });
     }
     
-    on_member_class_click(member_class_uri) {
-	//console.log("SHACLClassView.js onClick member", member_class_uri);
-	this.props.on_class_uri_add(member_class_uri);
+    on_class_property_click(value_type_uri) {
+	this.props.on_class_uri_add(value_type_uri);
     }
 
     on_superclass_click(superclass_uri) {
-	//console.log("SHACLClassView.js onClick superclass_uri", superclass_uri);
 	this.props.on_class_uri_add(superclass_uri);
     }
 
@@ -112,14 +133,14 @@ export class SHACLClassView extends React.Component {
 	//console.log("SHACLClassView:", this.props.class_details);
 	let class_ctrl_id = this.props.el_id + "-class-ctrl";
 
-	let class_details_pre = this.get_members().map((x) => {
+	let class_details_pre = this.get_class_properties().map((x) => {
 	    let v = null;
-	    if (x.mclass) {
-		v = (<a href="#" onClick={() => this.on_member_class_click(x.mclass.id)}>{utils.compact_uri(x.mclass.id)}</a>);
-	    } else if (x.mdt) {
-		v = utils.compact_uri(x.mdt.id);
+	    if (x.value_constr_type == ENUMSHACLValueConstrType.CLASS) {
+		v = (<a href="#" onClick={() => this.on_class_property_click(x.value_type_uri)}>{utils.compact_uri(x.value_type_uri)}</a>);
+	    } else if (x.value_constr_type == ENUMSHACLValueConstrType.DATATYPE) {
+		v = utils.compact_uri(x.value_type_uri);
 	    }
-	    return (<tr><td>{utils.compact_uri(x.mpath.id)}</td><td><i>{v}</i></td></tr>);
+	    return (<tr><td>{utils.compact_uri(x.path_uri)}</td><td><i>{v}</i></td></tr>);
 	});
 	
 	let superclass_uris = this.get_superclass_uris()
