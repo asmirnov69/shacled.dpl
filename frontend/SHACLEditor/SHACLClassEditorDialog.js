@@ -73,36 +73,36 @@ class ClassPropertyEditor extends React.Component {
 	super(props);
 	this.state = {class_property: this.props.class_property}
 
-	this.__update_member = this.__update_member.bind(this);
+	this.__update = this.__update.bind(this);
     }
 
-    __update_member() {
+    __update() {
 	let class_uri = "<" + this.props.dialog.state.class_uri + ">";
-	let old_member_path = "<" + this.props.class_property.path_uri + ">";
-	let member_path = "<" + this.state.class_property.path_uri + ">";
-	let m_spec_type = "sh:" + SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_enum_out_str(this.state.class_property.value_constr_type);
-	let m_type = "<" + this.state.class_property.value_type_uri + ">";
+	let old_cp_path = "<" + this.props.class_property.path_uri + ">";
+	let cp_path = "<" + this.state.class_property.path_uri + ">";
+	let cp_vct_uri = SHACLValueConstrTypeFactory_ston.value_constr_types[this.state.class_property.value_constr_type].value_constr_type_uri;
+	let cp_value_type_uri = "<" + this.state.class_property.value_type_uri + ">";
 	let rq = `delete {
                     graph <testdb:shacl-defs> {
-                      ?member ?old_m_pred ?old_m_obj
+                      ?cp ?old_cp_pred ?old_cp_obj
                     }
                   } insert {
                     graph <testdb:shacl-defs> {
-                      ?member sh:path ?member_path; ?m_spec_type ?m_type; sh:minCount 1; sh:maxCount 1
+                      ?cp sh:path ?cp_path; ?cp_vct_uri ?cp_value_type_uri; sh:minCount 1; sh:maxCount 1
                     }
                   } where {
                     bind(${class_uri} as ?class_uri)
-                    bind(${member_path} as ?member_path)
-                    bind(${old_member_path} as ?old_member_path)
-                    bind(${m_spec_type} as ?m_spec_type)
-                    bind(${m_type} as ?m_type)
-                    graph <testdb:shacl-defs> {                      
-                      ?class_shape sh:targetClass ?class_uri; sh:property ?member.
-                      ?member sh:path ?old_member_path.
-                      ?member ?old_m_pred ?old_m_obj
+                    bind(${cp_path} as ?cp_path)
+                    bind(${old_cp_path} as ?old_cp_path)
+                    bind(${cp_vct_uri} as ?cp_vct_uri)
+                    bind(${cp_value_type_uri} as ?cp_value_type_uri)
+                    graph <testdb:shacl-defs> {
+                      ?class_shape sh:targetClass ?class_uri; sh:property ?cp.
+                      ?cp sh:path ?old_cp_path.
+                      ?cp ?old_cp_pred ?old_cp_obj
                     }
                   }`
-	console.log("__update_member:", rq);
+	console.log("__update:", rq);
 	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
@@ -128,10 +128,10 @@ class ClassPropertyEditor extends React.Component {
 		                  value={this.state.class_property.value_type_uri}
 		onChange={v => {
 		    let cp = this.state.class_property;
-		    cp.value_type_uri = v;		    
+		    cp.value_type_uri = v;
 		    this.setState({class_property: cp});
 		}}/></td>
-		<td><button onClick={this.__update_member}>update</button></td>
+		<td><button onClick={this.__update}>update</button></td>
 		</tr></tbody></table>);
     }
 };
