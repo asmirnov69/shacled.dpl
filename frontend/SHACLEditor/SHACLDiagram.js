@@ -38,12 +38,12 @@ export default class SHACLDiagram extends React.Component {
 	let rq_diagram = `
         construct {
           ?class_uri rdfs:subClassOf ?superclass_uri;
-                     ?member_path ?member_class_uri.
+                     ?cp_path ?cp_value_type_uri.
         } where {
           values (?class_uri) { ${class_uris_s} }
           graph <testdb:shacl-defs> {
             ?class_shape sh:targetClass ?class_uri.
-            optional {?class_shape sh:property [ sh:path ?member_path; sh:class ?member_class_uri ]}
+            optional {?class_shape sh:property [ sh:path ?cp_path; sh:class ?cp_value_type_uri ]}
             optional {?class_uri rdfs:subClassOf ?superclass_uri}
           }
         }`;
