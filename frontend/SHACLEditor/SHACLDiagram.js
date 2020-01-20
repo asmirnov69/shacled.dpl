@@ -5,15 +5,18 @@ import * as utils from './utils.js';
 import RDFDiagram from './RDFDiagram.js';
 import {SHACLValueConstrTypeFactory, SHACLValueConstrTypeFactory_ston} from './SHACLClassProperty.js';
 import {SHACLClassView, SHACLClassViewFactory, SHACLClassViewFactory_ston} from './SHACLClassView.js';
+import {DropdownList} from './misccomponents.js';
+
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 
 export default class SHACLDiagram extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {class_uris: new Set(['testdb:Equity'])};
+	this.state = {class_uris: new Set([])};
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 	this.diagram = React.createRef();
 	this.add_class = this.add_class.bind(this);
+	this.show_class = this.show_class.bind(this);
 	this.load_classes = this.load_classes.bind(this);
 	this.remove = this.remove.bind(this);	
 	this.new_classname = React.createRef();
@@ -33,7 +36,6 @@ export default class SHACLDiagram extends React.Component {
 
     load_classes() {
 	let class_uris = Array.from(this.state.class_uris);
-	let db_uri_scheme = this.props.db_uri_scheme;
 	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
 	let rq_diagram = `
         construct {
@@ -72,14 +74,13 @@ export default class SHACLDiagram extends React.Component {
 	    return;
 	}
 	
-	//let new_class_uri = utils.get_uri(this.props.db_uri_scheme, class_name);
 	let new_class_uri = "testdb:" + class_name;
 	if (new_class_uri in SHACLClassViewFactory_ston.shacl_class_views) {
 	    alert("such class is already defined");
 	    return;
 	}
 
-	let random_uri = utils.get_uri(this.props.db_uri_scheme, utils.generateQuickGuid());
+	let random_uri = utils.get_uri("testdb:", utils.generateQuickGuid());
 	let rq = `insert data {
                graph <testdb:shacl-defs> { 
                   ${random_uri} rdf:type sh:NodeShape; sh:targetClass <${new_class_uri}>.
@@ -99,6 +100,22 @@ export default class SHACLDiagram extends React.Component {
 	});
     }
 
+    show_class(class_uri) {
+	if (class_uri.length == 0) {
+	    alert("class name is empty");
+	    return;
+	}
+	
+	if (!(class_uri in SHACLClassViewFactory_ston.shacl_class_views)) {
+	    alert("no such class defined: " + class_uri);
+	    return;
+	}
+
+	let new_state = this.state;
+	new_state.class_uris.add(class_uri);
+	this.setState(new_state, () => this.load_classes());		
+    }
+
     on_class_uri_add(new_class_uri) {
 	console.log("new uri:", new_class_uri);
 	let new_state = this.state;
@@ -111,11 +128,7 @@ export default class SHACLDiagram extends React.Component {
 	new_state.class_uris.delete(class_uri);
 	this.setState(new_state, () => this.load_classes());		
     }
-    
-    apply_layout() {
-	this.diagram.current.apply_layout();
-    }
-    
+        
     remove() {
 	console.log("remove", this.graph.getSelectionCount());
 	if (this.graph.getSelectionCount() == 1) {
@@ -125,9 +138,11 @@ export default class SHACLDiagram extends React.Component {
     }
 
     render() {
+	let all_classes = Object.keys(SHACLClassViewFactory_ston.shacl_class_views);
+	//let all_classes = ['Security', 'Equity'];
 	return (<div>
 		<button onClick={() => this.add_class()}>ADD CLASS</button>
-		<button onClick={() => this.apply_layout()}>layout</button>
+		<DropdownList items={all_classes} onChange={this.show_class}/>
 		<input type="text" defaultValue="" ref={this.new_classname} onChange={(evt) => this.new_classname.current.value = evt.target.value}/>
 		<input type="text" value={Array.from(this.state.class_uris).join(",")}></input>
 		<button onClick={() => this.remove()}>DEL</button>

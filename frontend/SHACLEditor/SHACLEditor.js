@@ -19,7 +19,8 @@ export default class SHACLEditor extends React.Component {
 		 <HierarchyView communicator={this.props.communicator} top_app={this}/>
 		</div>
 		<div style={{backgroundColor: "cyan"}}>
-		<SHACLDiagram ref={this.shacl_diagram_ref} communicator={this.props.communicator} top_app={this} db_uri_scheme="testdb"/>
+		<SHACLDiagram ref={this.shacl_diagram_ref} top_app={this}
+		              communicator={this.props.communicator}/>
 		<SHACLClassEditorDialog ref={this.class_editor_dialog_ref} top_app={this}/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>

@@ -73,7 +73,9 @@ export class SHACLClassViewFactory {
 		    this.shacl_class_views[class_uri] = o;
 		}
 	    });
-		    
+
+	    this.shacl_diagram.forceUpdate();
+	    
 	    return Promise.resolve();
 	});
     }

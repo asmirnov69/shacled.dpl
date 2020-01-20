@@ -1,7 +1,7 @@
 import sys, os
 import pandas as pd
 sys.path.append("/home/asmirnov/pyjenautils")
-from pyjenautils import fuseki, jenagraph as j
+from pyjenautils import fuseki, jenagraph as j, prefix
 
 sys.path.append(os.path.join(os.environ['dipole_topdir'], "src"))
 import libdipole
@@ -36,6 +36,10 @@ def to_json_UBL(col_vs):
 class FusekiConnection:
     def __init__(self, fuseki_url):
         self.fuseki_conn = fuseki.FusekiConnection(fuseki_url)
+
+    def set_base_uri(self, base_uri):
+        print "Fuseki::set_base_uri:", base_uri
+        prefix.set_base_uri(base_uri)
         
     def select(self, rq):
         print "Fuseki::select:", rq

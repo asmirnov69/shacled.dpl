@@ -3,39 +3,8 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {SHACLClassViewFactory_ston} from './SHACLClassView.js';
 import {SHACLValueConstrTypeFactory_ston} from './SHACLClassProperty.js';
+import {MyChip, DropdownList} from './misccomponents.js';
 import * as utils from './utils.js';
-
-class MyChip extends React.Component {
-    constructor(props) {
-	super(props);
-    }
-    render() {
-	return (<div>{this.props.label}<button onClick={() => this.props.onDelete(this.props.label)}>x</button></div>);
-    }
-};
-
-class DropdownList extends React.Component {
-    constructor(props) {
-	super(props);
-	this.state = {value: this.props.value};
-	this.on_change = this.on_change.bind(this);
-    }
-
-    on_change(evt) {
-	this.setState({value: evt.target.value}, () => {
-	    if (this.props.onChange) {
-		this.props.onChange(this.state.value);
-	    }
-	});
-    }
-    
-    render() {
-	let option_values = this.props.items.map(x => (<option value={x}>{x}</option>));
-	return (<select style={{borderWidth: "0px"}} value={this.state.value} onChange={this.on_change}>
-		{option_values}
-		</select>);
-    }
-};
 
 class SuperClassChooser extends React.Component {
     constructor(props) {
@@ -164,7 +133,7 @@ export default class SHACLClassEditorDialog extends React.Component {
     }
 
     __refresh_after_update_rq() {
-	SHACLClassViewFactory_ston.refresh([this.state.class_uri]).then(() => {
+	SHACLClassViewFactory_ston.refresh(null).then(() => {
 	    //debugger;
 	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];	    
 	    this.setState({new_class_property_path: ""}, () => {
