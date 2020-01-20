@@ -60,16 +60,15 @@ export class SHACLClassViewFactory {
 		if (class_uri in this.shacl_class_views_objs) {
 		    this.shacl_class_views_objs[class_uri].props.class_details = class_details[class_uri];
 		} else {
-		    let new_node_props = {shacl_diagram: this.shacl_diagram,
-					  diagram: this.shacl_diagram.diagram,
-					  cell: null,
-					  on_class_uri_add: (new_class_uri) => this.shacl_diagram.on_class_uri_add(new_class_uri),
-					  on_class_uri_del: (del_class_uri) => this.shacl_diagram.on_class_hide(del_class_uri)};
 		    let o = (<SHACLClassView ref={(r) => this.shacl_class_views_objs[class_uri] = r}
+			     shacl_diagram={this.shacl_diagram}
+			     cell={null}			     
 			     class_uri={class_uri}
 			     class_details={class_details[class_uri]}
 			     el_id={"shacl-" + utils.generateQuickGuid()}
-			     {...new_node_props}/>);
+			     on_class_uri_add={new_class_uri => this.shacl_diagram.on_class_uri_add(new_class_uri)}
+			     on_class_uri_del={del_class_uri => this.shacl_diagram.on_class_hide(del_class_uri)}
+			     />);
 		    this.shacl_class_views[class_uri] = o;
 		}
 	    });

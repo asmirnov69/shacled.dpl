@@ -16,7 +16,7 @@ export default class SHACLDiagram extends React.Component {
 	this.state = {class_uris: new Set([])};
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 
-	this.diagram = null;
+	this.rdf_diagram = null;
 	this.class_editor_dialog = null;
 
 	this.add_class = this.add_class.bind(this);
@@ -54,19 +54,19 @@ export default class SHACLDiagram extends React.Component {
           }
         }`;
 
-	let new_uris = class_uris.filter(x => !(x in this.diagram.nodes));
-	let todel_uris = Object.keys(this.diagram.nodes).filter(x => !(this.state.class_uris.has(x)));
+	let new_uris = class_uris.filter(x => !(x in this.rdf_diagram.nodes));
+	let todel_uris = Object.keys(this.rdf_diagram.nodes).filter(x => !(this.state.class_uris.has(x)));
 	console.log("class_uris:", class_uris);
 	console.log("new_uris:", new_uris);
 	console.log("todel_uris:", todel_uris);
 	let new_nodes = new_uris.map(x => [x, SHACLClassViewFactory_ston.get_object(x)]);
-	this.diagram.set_nodes(new_nodes);
-	this.diagram.remove_nodes(todel_uris);
+	this.rdf_diagram.set_nodes(new_nodes);
+	this.rdf_diagram.remove_nodes(todel_uris);
 
 	this.fuseki_prx.construct(rq_diagram).then(rq_res_ => {
 	    let rq_res = utils.to_n3_model(rq_res_);
-	    this.diagram.set_diagram(rq_res);
-	    this.diagram.refresh();
+	    this.rdf_diagram.set_diagram(rq_res);
+	    this.rdf_diagram.refresh();
 	});
     }
     
@@ -99,8 +99,8 @@ export default class SHACLDiagram extends React.Component {
 	    return SHACLClassViewFactory_ston.refresh([new_class_uri]);
 	}).then(() => {
 	    let o = SHACLClassViewFactory_ston.get_object(new_class_uri);
-	    this.diagram.set_nodes([[new_class_uri, o]]);
-	    this.diagram.refresh();
+	    this.rdf_diagram.set_nodes([[new_class_uri, o]]);
+	    this.rdf_diagram.refresh();
 	});
     }
 
@@ -151,7 +151,7 @@ export default class SHACLDiagram extends React.Component {
 		<input type="text" value={Array.from(this.state.class_uris).join(",")}></input>
 		<button onClick={() => this.remove()}>DEL</button>
 		<SHACLClassEditorDialog ref={r => this.class_editor_dialog = r} shacl_diagram={this}/>
-		<RDFDiagram ref={r => this.diagram = r}/>
+		<RDFDiagram ref={r => this.rdf_diagram = r}/>
 	        </div>);
     }
 };
