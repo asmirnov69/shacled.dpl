@@ -57,11 +57,11 @@ export class SHACLClassViewFactory {
 
 	    //console.log("class_details:", class_details);
 	    Object.keys(class_details).forEach(class_uri => {
-		if (class_uri in this.shacl_class_views) {
+		if (class_uri in this.shacl_class_views_objs) {
 		    this.shacl_class_views_objs[class_uri].props.class_details = class_details[class_uri];
 		} else {
-		    let new_node_props = {diagram: this.shacl_diagram.diagram.current,
-					  top_app: this.shacl_diagram.props.top_app,
+		    let new_node_props = {shacl_diagram: this.shacl_diagram,
+					  diagram: this.shacl_diagram.diagram,
 					  cell: null,
 					  on_class_uri_add: (new_class_uri) => this.shacl_diagram.on_class_uri_add(new_class_uri),
 					  on_class_uri_del: (del_class_uri) => this.shacl_diagram.on_class_hide(del_class_uri)};
@@ -161,7 +161,7 @@ export class SHACLClassView extends React.Component {
 		<table id={class_ctrl_id}>
 		 <tbody>
 		<tr>{heading}
-		 <td><input type="button" value="++" onClick={()=>this.props.top_app.class_editor_dialog_ref.current.show_dialog(this.props.class_uri)}/></td>
+		 <td><input type="button" value="++" onClick={()=>this.props.shacl_diagram.class_editor_dialog.show_dialog(this.props.class_uri)}/></td>
 		 <td><input type="button" value="hide" onClick={()=>this.props.on_class_uri_del(this.props.class_uri)}/></td>
 		  </tr>
 	        {class_details_pre}

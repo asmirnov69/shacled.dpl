@@ -24,7 +24,7 @@ class SuperClassChooser extends React.Component {
                     bind(${superclass_uri} as ?superclass_uri)
                   }`;
         console.log("add_superclass:", rq);                      
-	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.fuseki_prx;
+	let fuseki_prx = this.props.dialog.props.shacl_diagram.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
     }
@@ -72,7 +72,7 @@ class ClassPropertyEditor extends React.Component {
                     }
                   }`
 	console.log("__update:", rq);
-	let fuseki_prx = this.props.dialog.props.top_app.shacl_diagram_ref.current.fuseki_prx;
+	let fuseki_prx = this.props.dialog.props.shacl_diagram.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
     }
@@ -137,10 +137,10 @@ export default class SHACLClassEditorDialog extends React.Component {
 	    //debugger;
 	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];	    
 	    this.setState({new_class_property_path: ""}, () => {
-		this.props.top_app.shacl_diagram_ref.current.load_classes();
+		this.props.shacl_diagram.load_classes();
 		let c_state = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri].state;
 		shacl_class_view.forceUpdate();
-		//this.props.top_app.shacl_diagram_ref.current.diagram.current.fit_cell_content(this.state.class_uri);
+		//this.props.shacl_diagram.diagram.fit_cell_content(this.state.class_uri);
 		console.log('diagram refreshed');
 	    });
 	});	
@@ -221,12 +221,11 @@ export default class SHACLClassEditorDialog extends React.Component {
     render() {
 	let class_property_rows = null;
 	let superclasses = null;
-	if (this.props.top_app.shacl_diagram_ref.current) {
-	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];
+	let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];
+	if (shacl_class_view) {
 	    superclasses = shacl_class_view.get_superclass_uris().map(x => (<MyChip label={x} onDelete={this.__remove_superclass}/>));
 	    class_property_rows = shacl_class_view.get_class_properties().map(x => this.__get_class_property_row(x));
 	}
-
 	
 	return (
 	    	<Dialog onClose={(v) => { this.setState({dialog_open: false}); }} aria-labelledby="simple-dialog-title" open={this.state.dialog_open}>

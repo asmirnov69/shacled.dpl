@@ -1,14 +1,12 @@
 import React from "react";
 import SHACLDiagram from './SHACLDiagram.js';
-import SHACLClassEditorDialog from './SHACLClassEditorDialog.js';
 import HierarchyView from './HierarchyView.js';
 import DataSheet from './DataSheet.js';
 
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
-	this.shacl_diagram_ref = React.createRef();
-	this.class_editor_dialog_ref = React.createRef();
+	this.shacl_diagram = null;
     }
 
     render() {
@@ -16,12 +14,10 @@ export default class SHACLEditor extends React.Component {
 			     gridTemplateColumns: "180px auto",
 			     gridTemplateRows: "auto 200px"}}>
 		<div>
-		 <HierarchyView communicator={this.props.communicator} top_app={this}/>
+		 <HierarchyView communicator={this.props.communicator}/>
 		</div>
 		<div style={{backgroundColor: "cyan"}}>
-		<SHACLDiagram ref={this.shacl_diagram_ref} top_app={this}
-		              communicator={this.props.communicator}/>
-		<SHACLClassEditorDialog ref={this.class_editor_dialog_ref} top_app={this}/>
+		<SHACLDiagram ref={r=>this.shacl_diagram=r} communicator={this.props.communicator}/>
 		</div>
 		<div style={{backgroundColor: "blue", gridColumn: "1/3"}}>
 		<DataSheet/>
