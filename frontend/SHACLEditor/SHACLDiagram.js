@@ -14,8 +14,8 @@ export default class SHACLDiagram extends React.Component {
     constructor(props) {
 	super(props);
 	this.state = {class_uris: new Set([])};
-	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 
+	this.fuseki_prx = null;
 	this.rdf_diagram = null;
 	this.class_editor_dialog = null;
 
@@ -30,14 +30,23 @@ export default class SHACLDiagram extends React.Component {
     }
 
     componentDidMount() {
-	SHACLClassViewFactory_ston.set_fuseki_prx(this.fuseki_prx);
-	SHACLClassViewFactory_ston.set_shacl_diagram(this);
-	SHACLClassViewFactory_ston.refresh(null).then(() => {
-	    SHACLValueConstrTypeFactory_ston.refresh(SHACLClassViewFactory_ston);
-	    this.load_classes();
-	});
     }
 
+    set_dataset_url(dataset_url) {
+	this.props.dataset_url = dataset_url;
+	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
+	SHACLClassViewFactory_ston.set_fuseki_prx(this.fuseki_prx);
+	SHACLClassViewFactory_ston.set_shacl_diagram(this);
+	if (this.props.dataset_url) {
+	    SHACLClassViewFactory_ston.fuseki_prx.set_dataset_url(this.props.dataset_url).then(() => {
+		return SHACLClassViewFactory_ston.refresh(null);
+	    }).then(() => {
+		SHACLValueConstrTypeFactory_ston.refresh(SHACLClassViewFactory_ston);
+		this.load_classes();		
+	    });
+	}
+    }
+    
     load_classes() {
 	let class_uris = Array.from(this.state.class_uris);
 	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
@@ -84,7 +93,7 @@ export default class SHACLDiagram extends React.Component {
 	    return;
 	}
 
-	let random_uri = utils.get_uri("testdb:", utils.generateQuickGuid());
+	let random_uri = utils.get_uri("testdb:", utils.generateQuickGuid());	
 	let rq = `insert data {
                graph <testdb:shacl-defs> { 
                   ${random_uri} rdf:type sh:NodeShape; sh:targetClass <${new_class_uri}>.
@@ -142,10 +151,10 @@ export default class SHACLDiagram extends React.Component {
     }
 
     render() {
-	let all_classes = Object.keys(SHACLClassViewFactory_ston.shacl_class_views);
-	//let all_classes = ['Security', 'Equity'];
+	console.log("SHACLDiagram::render");
+	let all_classes = Object.keys(SHACLClassViewFactory_ston.shacl_class_views);	
 	return (<div>
-		<button onClick={() => this.add_class()}>ADD CLASS</button>
+		<button onClick={this.add_class}>ADD CLASS</button>
 		<DropdownList items={all_classes} onChange={this.show_class}/>
 		<input type="text" defaultValue="" ref={r=>this.new_classname=r} onChange={(evt) => this.new_classname.value = evt.target.value}/>
 		<input type="text" value={Array.from(this.state.class_uris).join(",")}></input>

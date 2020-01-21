@@ -5,8 +5,6 @@ import {getBackendCommunicator} from 'libdipole-js';
 
 
 getBackendCommunicator().then((communicator) => {
-    ReactDOM.render(<SHACLEditor communicator={communicator}
-		    base_uri="testdb:"/>,
-		    document.getElementById('root'));
+    ReactDOM.render(<SHACLEditor communicator={communicator}/>, document.getElementById('root'));
 });
 

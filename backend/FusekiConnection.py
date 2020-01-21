@@ -34,9 +34,13 @@ def to_json_UBL(col_vs):
 
 @libdipole.exportclass
 class FusekiConnection:
-    def __init__(self, fuseki_url):
-        self.fuseki_conn = fuseki.FusekiConnection(fuseki_url)
-
+    def __init__(self):
+        self.fuseki_conn = None
+        
+    def set_dataset_url(self, dataset_url):
+        print "Fuseki::set_dataset_url:", dataset_url
+        self.fuseki_conn = fuseki.FusekiConnection(dataset_url)
+        
     def set_base_uri(self, base_uri):
         print "Fuseki::set_base_uri:", base_uri
         prefix.set_base_uri(base_uri)
