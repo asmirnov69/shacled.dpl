@@ -29,19 +29,21 @@ export default class SHACLDiagram extends React.Component {
 	this.on_class_hide = this.on_class_hide.bind(this);
     }
 
-    set_dataset_url(dataset_url) {
-	this.props.dataset_url = dataset_url;
+    componentDidMount() {
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 	SHACLClassViewFactory_ston.set_fuseki_prx(this.fuseki_prx);
 	SHACLClassViewFactory_ston.set_shacl_diagram(this);
-	if (this.props.dataset_url) {
-	    SHACLClassViewFactory_ston.fuseki_prx.set_dataset_url(this.props.dataset_url).then(() => {
-		return SHACLClassViewFactory_ston.refresh(null);
-	    }).then(() => {
-		SHACLValueConstrTypeFactory_ston.refresh(SHACLClassViewFactory_ston);
-		this.load_classes();		
-	    });
-	}
+	SHACLClassViewFactory_ston.fuseki_prx.set_dataset_url(this.props.dataset_url).then(() => {
+	    return SHACLClassViewFactory_ston.refresh(null);
+	}).then(() => {
+	    SHACLValueConstrTypeFactory_ston.refresh(SHACLClassViewFactory_ston);
+	    this.load_classes();		
+	});
+    }
+
+    componentWillUnmount()
+    {
+	console.log("SHACLDiagram::componentWillUnmount:", this.props.dataset_url);
     }
     
     load_classes() {
