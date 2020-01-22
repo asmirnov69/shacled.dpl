@@ -12,23 +12,21 @@ export class MyChip extends React.Component {
 export class DropdownList extends React.Component {
     constructor(props) {
 	super(props);
-	console.log("DropdownList::ctor", this.props.value);
-	let init_value = this.props.value ? this.props.value : this.props.items[0]
-	this.state = {value: init_value};
+	this.state = {selected_item: this.props.selected_item};
 	this.on_change = this.on_change.bind(this);
     }
 
     componentDidMount() {
-	console.log("DropdownList::componentDidMount");
-	//if (this.props.onChange) {
-	//    this.props.onChange(this.state.value ? this.state.value : this.props.items[0]);
-	//}
+	console.log("DropdownList::componentDidMount", this.state);
+	if (this.props.onChange && this.state.selected_item == null) {
+	    this.props.onChange(this.props.items[0]);
+	}	
     }
     
     on_change(evt) {
-	this.setState({value: evt.target.value}, () => {
+	this.setState({selected_item: evt.target.value}, () => {
 	    if (this.props.onChange) {
-		this.props.onChange(this.state.value);
+		this.props.onChange(this.state.selected_item);
 	    }
 	});
     }
@@ -36,15 +34,15 @@ export class DropdownList extends React.Component {
     render() {
 	let option_values = this.props.items.map(x => {
 	    let ret = null;
-	    //debugger;
-	    if (x == this.props.value) {
+	    if (x == this.state.selected_item) {
 		ret = (<option value={x} selected="selected">{x}</option>);
 	    } else {
 		ret = (<option value={x}>{x}</option>);
 	    }
 	    return ret;
 	});
-	return (<select style={{borderWidth: "0px"}} value={this.state.value} onChange={this.on_change}>
+
+	return (<select style={{borderWidth: "0px"}} value={this.state.selected_item} onChange={this.on_change}>
 		{option_values}
 		</select>);
     }

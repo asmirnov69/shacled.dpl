@@ -12,32 +12,24 @@ import {DropdownList} from './misccomponents.js';
 class SHACLEditorSettingsDialog extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {dialog_open: false, dataset_urls: [], dataset_url: null}
-	this.set_new_dataset_url = this.set_new_dataset_url.bind(this);
+	this.dataset_urls = []
+	this.state = {dialog_open: false, dataset_url: null}
     }
 
     componentDidMount() {
 	let fuseki_datasets_prx = new FusekiDatasetsPrx(this.props.parent.props.communicator, 'datasets');
 	fuseki_datasets_prx.get_dataset_urls().then(dataset_urls => {
-	    this.setState({dataset_urls: dataset_urls});
+	    this.dataset_urls = dataset_urls;
 	});
     }
-    
-    set_new_dataset_url() {
-	let selected_item = this.state.dataset_url ? this.state.dataset_url : this.state.dataset_urls[0];
-	this.props.parent.shacl_diagram.set_dataset_url(selected_item);
-	this.props.parent.forceUpdate(); // setState({dataset_url: selected_item});
-	this.setState({dialog_open: false});
-    }
-    
+        
     render() {
 	return (
 		<Dialog onClose={v => this.setState({dialog_open: false})}
 	                aria-labelledby="simple-dialog-title" open={this.state.dialog_open}>
 		<DialogTitle>Settings...</DialogTitle>
-		<DropdownList items={this.state.dataset_urls} value={this.state.dataset_url} onChange={v=>this.setState({dataset_url: v})}/>
-		<button onClick={this.set_new_dataset_url}>OK</button>
-		<button onClick={()=>this.setState({dialog_open: false})}>Cancel</button>
+		<DropdownList items={this.dataset_urls} selected_item={this.state.dataset_url} onChange={v=>this.setState({dataset_url: v})}/>
+		<button onClick={() => this.setState({dialog_open: false}, ()=>this.props.onOK(this.state))}>OK</button>
 		</Dialog>
 	);
     }
@@ -46,8 +38,8 @@ class SHACLEditorSettingsDialog extends React.Component {
 export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {dataset_url: null}
 	this.settings_dialog = null;
+	this.state = {dataset_url: null}
 	this.shacl_diagram = null;
     }
 
@@ -58,13 +50,16 @@ export default class SHACLEditor extends React.Component {
 		 <div>
 		  <button onClick={() => this.settings_dialog.setState({dialog_open: true, dataset_url: this.state.dataset_url})}>settings</button>
 		  <input type="text" value={this.state.dataset_url}/>
-		  <SHACLEditorSettingsDialog ref={r => this.settings_dialog=r} parent={this}/>
+		<SHACLEditorSettingsDialog ref={r=>this.settings_dialog=r} parent={this} onOK={(out_state) => this.setState({dataset_url: out_state.dataset_url}, ()=>this.shacl_diagram.set_dataset_url(out_state.dataset_url))}/>
 		 </div>
 		 <div style={{backgroundColor: "cyan"}}>
 		  <SHACLDiagram ref={r=>this.shacl_diagram=r} communicator={this.props.communicator}/>
 		 </div>
 		</div>);
 
+	/*		
+	*/
+	
 	/*
 	return (<div style={{display: "grid", width: "100%", height: "100%",
 			     gridTemplateColumns: "180px auto",

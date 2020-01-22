@@ -86,7 +86,7 @@ class ClassPropertyEditor extends React.Component {
 		    this.setState({class_property: cp});
 		}}/></td>
 		<td><DropdownList items={SHACLValueConstrTypeFactory_ston.get_value_constr_types_out_str()}
-		                  value={SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_enum_out_str(this.state.class_property.value_constr_type)}
+		                  selected_item={SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_enum_out_str(this.state.class_property.value_constr_type)}
 		onChange={v => {
 		    let cp = this.state.class_property;
 		    cp.value_constr_type = SHACLValueConstrTypeFactory_ston.get_value_constr_type_in_str_out_enum(v);
@@ -94,7 +94,7 @@ class ClassPropertyEditor extends React.Component {
 		    this.setState({class_property: cp});
 		}}/></td>
 		<td><DropdownList items={SHACLValueConstrTypeFactory_ston.get_value_type_uris(this.state.class_property.value_constr_type)}
-		                  value={this.state.class_property.value_type_uri}
+		                  selected_item={this.state.class_property.value_type_uri}
 		onChange={v => {
 		    let cp = this.state.class_property;
 		    cp.value_type_uri = v;

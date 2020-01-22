@@ -13,7 +13,7 @@ import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
 export default class SHACLDiagram extends React.Component {
     constructor(props) {
 	super(props);
-	this.state = {class_uris: new Set([])};
+	this.state = {class_uris: new Set([]), curr_show_class: null};
 
 	this.fuseki_prx = null;
 	this.rdf_diagram = null;
@@ -27,9 +27,6 @@ export default class SHACLDiagram extends React.Component {
 
 	this.on_class_uri_add = this.on_class_uri_add.bind(this);
 	this.on_class_hide = this.on_class_hide.bind(this);
-    }
-
-    componentDidMount() {
     }
 
     set_dataset_url(dataset_url) {
@@ -114,6 +111,10 @@ export default class SHACLDiagram extends React.Component {
     }
 
     show_class(class_uri) {
+	if (!class_uri) {
+	    return;
+	}
+	
 	if (class_uri.length == 0) {
 	    alert("class name is empty");
 	    return;
@@ -125,6 +126,7 @@ export default class SHACLDiagram extends React.Component {
 	}
 
 	let new_state = this.state;
+	new_state.curr_show_class = class_uri;
 	new_state.class_uris.add(class_uri);
 	this.setState(new_state, () => this.load_classes());		
     }
@@ -155,7 +157,7 @@ export default class SHACLDiagram extends React.Component {
 	let all_classes = Object.keys(SHACLClassViewFactory_ston.shacl_class_views);	
 	return (<div>
 		<button onClick={this.add_class}>ADD CLASS</button>
-		<DropdownList items={all_classes} onChange={this.show_class}/>
+		<DropdownList items={all_classes} selected_item={this.state.curr_show_class} onChange={v => this.show_class(v)}/>
 		<input type="text" defaultValue="" ref={r=>this.new_classname=r} onChange={(evt) => this.new_classname.value = evt.target.value}/>
 		<input type="text" value={Array.from(this.state.class_uris).join(",")}></input>
 		<button onClick={() => this.remove()}>DEL</button>
