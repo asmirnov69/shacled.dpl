@@ -18,6 +18,9 @@ export class DropdownList extends React.Component {
 
     componentDidMount() {
 	//console.log("DropdownList::componentDidMount", this.state);
+	if (this.props.special_skip) {
+	    return;
+	}
 	if (this.props.onChange && this.state.selected_item == null) {
 	    this.props.onChange(this.props.items[0]);
 	}	

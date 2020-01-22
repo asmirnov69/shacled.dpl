@@ -30,14 +30,17 @@ export default class SHACLDiagram extends React.Component {
     }
 
     componentDidMount() {
+	SHACLClassViewFactory_ston.shacl_class_views = {}
+	SHACLClassViewFactory_ston.shacl_class_views_objs = {}
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
 	SHACLClassViewFactory_ston.set_fuseki_prx(this.fuseki_prx);
 	SHACLClassViewFactory_ston.set_shacl_diagram(this);
+	console.log("setting dataset_url:", this.props.dataset_url);
 	SHACLClassViewFactory_ston.fuseki_prx.set_dataset_url(this.props.dataset_url).then(() => {
 	    return SHACLClassViewFactory_ston.refresh(null);
 	}).then(() => {
 	    SHACLValueConstrTypeFactory_ston.refresh(SHACLClassViewFactory_ston);
-	    this.load_classes();		
+	    this.load_classes();
 	});
     }
 
@@ -113,6 +116,7 @@ export default class SHACLDiagram extends React.Component {
     }
 
     show_class(class_uri) {
+	console.log("SHACLDiagram::show_class, defineds shacl classes:", Object.keys(SHACLClassViewFactory_ston.shacl_class_views));
 	if (!class_uri) {
 	    return;
 	}
@@ -159,7 +163,7 @@ export default class SHACLDiagram extends React.Component {
 	let all_classes = Object.keys(SHACLClassViewFactory_ston.shacl_class_views);	
 	return (<div>
 		<button onClick={this.add_class}>ADD CLASS</button>
-		<DropdownList items={all_classes} selected_item={this.state.curr_show_class} onChange={v => this.show_class(v)}/>
+		<DropdownList items={all_classes} selected_item={this.state.curr_show_class} onChange={v => this.show_class(v)} special_skip={true}/>
 		<input type="text" defaultValue="" ref={r=>this.new_classname=r} onChange={(evt) => this.new_classname.value = evt.target.value}/>
 		<input type="text" value={Array.from(this.state.class_uris).join(",")}></input>
 		<button onClick={() => this.remove()}>DEL</button>
