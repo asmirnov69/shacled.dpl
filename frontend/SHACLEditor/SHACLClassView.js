@@ -4,21 +4,13 @@ import {ENUMSHACLValueConstrType, SHACLValueConstrTypeFactory_ston, SHACLClassPr
 import * as utils from './utils.js';
 
 export class SHACLClassViewFactory {
-    constructor() {
-	this.shacl_diagram = null;
-	this.fuseki_prx = null;
+    constructor(shacl_diagram, fuseki_prx) {
+	this.shacl_diagram = shacl_diagram;
+	this.fuseki_prx = fuseki_prx;
 	this.shacl_class_views = {}; // uri -> SHACLClassView element
 	this.shacl_class_views_objs = {}; // uri -> SHCALClassView object from inside of element
     }
 
-    set_shacl_diagram(o) {
-	this.shacl_diagram = o
-    }
-
-    set_fuseki_prx(o) {
-	this.fuseki_prx = o;
-    }
-    
     refresh(class_uris) {
 	let values_class_uris = '';
 	if (class_uris) {
@@ -83,8 +75,6 @@ export class SHACLClassViewFactory {
 	return class_uri in this.shacl_class_views ? this.shacl_class_views[class_uri] : null;
     }
 };
-
-export let SHACLClassViewFactory_ston = new SHACLClassViewFactory();
 
 export class SHACLClassView extends React.Component {
     constructor(props) {

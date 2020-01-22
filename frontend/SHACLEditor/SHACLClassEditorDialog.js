@@ -1,7 +1,6 @@
 import React from "react";
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import {SHACLClassViewFactory_ston} from './SHACLClassView.js';
 import {SHACLValueConstrTypeFactory_ston} from './SHACLClassProperty.js';
 import {MyChip, DropdownList} from './misccomponents.js';
 import * as utils from './utils.js';
@@ -133,12 +132,12 @@ export default class SHACLClassEditorDialog extends React.Component {
     }
 
     __refresh_after_update_rq() {
-	SHACLClassViewFactory_ston.refresh(null).then(() => {
+	this.props.shacl_diagram.class_view_factory.refresh(null).then(() => {
 	    //debugger;
-	    let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];	    
+	    let shacl_class_view = this.props.shacl_diagram.class_view_factory.shacl_class_views_objs[this.state.class_uri];	    
 	    this.setState({new_class_property_path: ""}, () => {
 		this.props.shacl_diagram.load_classes();
-		let c_state = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri].state;
+		let c_state = this.props.shacl_diagram.class_view_factory.shacl_class_views_objs[this.state.class_uri].state;
 		shacl_class_view.forceUpdate();
 		//this.props.shacl_diagram.diagram.fit_cell_content(this.state.class_uri);
 		console.log('diagram refreshed');
@@ -163,7 +162,7 @@ export default class SHACLClassEditorDialog extends React.Component {
                     }
                   }`
 	console.log("__remove_class_property:", rq);
-	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
+	let fuseki_prx = this.props.shacl_diagram.class_view_factory.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
 
@@ -191,7 +190,7 @@ export default class SHACLClassEditorDialog extends React.Component {
                   }`;
 
 	console.log("__add_new_class_property:", rq);
-	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
+	let fuseki_prx = this.props.shacl_diagram.class_view_factory.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
 
@@ -203,7 +202,7 @@ export default class SHACLClassEditorDialog extends React.Component {
     __remove_superclass(key) {
 	//debugger;
 	console.log("__remove_superclass");
-	let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];
+	let shacl_class_view = this.props.shacl_diagram.class_view_factory.shacl_class_views_objs[this.state.class_uri];
 	let class_uri = "<" + this.state.class_uri + ">";
 	let superclass_uri = "<" + key + ">";
 	let rq = `delete {
@@ -214,14 +213,14 @@ export default class SHACLClassEditorDialog extends React.Component {
                     bind(${superclass_uri} as ?superclass_uri)
                   }`;
 	console.log("__remove_superclass:", rq);
-	let fuseki_prx = SHACLClassViewFactory_ston.fuseki_prx;
+	let fuseki_prx = this.props.shacl_diagram.class_view_factory.fuseki_prx;
 	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
     }
     
     render() {
 	let class_property_rows = null;
 	let superclasses = null;
-	let shacl_class_view = SHACLClassViewFactory_ston.shacl_class_views_objs[this.state.class_uri];
+	let shacl_class_view = this.props.shacl_diagram.class_view_factory.shacl_class_views_objs[this.state.class_uri];
 	if (shacl_class_view) {
 	    superclasses = shacl_class_view.get_superclass_uris().map(x => (<MyChip label={x} onDelete={this.__remove_superclass}/>));
 	    class_property_rows = shacl_class_view.get_class_properties().map(x => this.__get_class_property_row(x));

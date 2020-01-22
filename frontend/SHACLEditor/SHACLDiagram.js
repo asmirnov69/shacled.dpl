@@ -5,7 +5,7 @@ import * as utils from './utils.js';
 import RDFDiagram from './RDFDiagram.js';
 import SHACLClassEditorDialog from './SHACLClassEditorDialog.js';
 import {SHACLValueConstrTypeFactory, SHACLValueConstrTypeFactory_ston} from './SHACLClassProperty.js';
-import {SHACLClassView, SHACLClassViewFactory, SHACLClassViewFactory_ston} from './SHACLClassView.js';
+import {SHACLClassView, SHACLClassViewFactory} from './SHACLClassView.js';
 import {DropdownList} from './misccomponents.js';
 
 import FusekiConnectionPrx from '../gen-js/FusekiConnectionPrx.js';
@@ -16,6 +16,7 @@ export default class SHACLDiagram extends React.Component {
 	this.state = {class_uris: new Set([]), curr_show_class: null};
 
 	this.fuseki_prx = null;
+	this.class_view_factory = null;
 	this.rdf_diagram = null;
 	this.class_editor_dialog = null;
 
@@ -30,16 +31,14 @@ export default class SHACLDiagram extends React.Component {
     }
 
     componentDidMount() {
-	SHACLClassViewFactory_ston.shacl_class_views = {}
-	SHACLClassViewFactory_ston.shacl_class_views_objs = {}
+	console.log("SHACLDiagram::componentDidMount");
 	this.fuseki_prx = new FusekiConnectionPrx(this.props.communicator, 'shacl_editor');
-	SHACLClassViewFactory_ston.set_fuseki_prx(this.fuseki_prx);
-	SHACLClassViewFactory_ston.set_shacl_diagram(this);
-	console.log("setting dataset_url:", this.props.dataset_url);
-	SHACLClassViewFactory_ston.fuseki_prx.set_dataset_url(this.props.dataset_url).then(() => {
-	    return SHACLClassViewFactory_ston.refresh(null);
+	this.class_view_factory = new SHACLClassViewFactory(this, this.fuseki_prx);
+	console.log("setting dataset_url on server:", this.props.dataset_url);
+	this.class_view_factory.fuseki_prx.set_dataset_url(this.props.dataset_url).then(() => {
+	    return this.class_view_factory.refresh(null);
 	}).then(() => {
-	    SHACLValueConstrTypeFactory_ston.refresh(SHACLClassViewFactory_ston);
+	    SHACLValueConstrTypeFactory_ston.refresh(this.class_view_factory);
 	    this.load_classes();
 	});
     }
@@ -70,7 +69,7 @@ export default class SHACLDiagram extends React.Component {
 	console.log("class_uris:", class_uris);
 	console.log("new_uris:", new_uris);
 	console.log("todel_uris:", todel_uris);
-	let new_nodes = new_uris.map(x => [x, SHACLClassViewFactory_ston.get_object(x)]);
+	let new_nodes = new_uris.map(x => [x, this.class_view_factory.get_object(x)]);
 	this.rdf_diagram.set_nodes(new_nodes);
 	this.rdf_diagram.remove_nodes(todel_uris);
 
@@ -90,7 +89,7 @@ export default class SHACLDiagram extends React.Component {
 	}
 	
 	let new_class_uri = "testdb:" + class_name;
-	if (new_class_uri in SHACLClassViewFactory_ston.shacl_class_views) {
+	if (new_class_uri in this.class_view_factory.shacl_class_views) {
 	    alert("such class is already defined");
 	    return;
 	}
@@ -107,16 +106,16 @@ export default class SHACLDiagram extends React.Component {
 	console.log(rq);
 	this.fuseki_prx.update(rq).then(() => {
 	    console.log("insert done");
-	    return SHACLClassViewFactory_ston.refresh([new_class_uri]);
+	    return this.class_view_factory.refresh([new_class_uri]);
 	}).then(() => {
-	    let o = SHACLClassViewFactory_ston.get_object(new_class_uri);
+	    let o = this.class_view_factory.get_object(new_class_uri);
 	    this.rdf_diagram.set_nodes([[new_class_uri, o]]);
 	    this.rdf_diagram.refresh();
 	});
     }
 
     show_class(class_uri) {
-	console.log("SHACLDiagram::show_class, defineds shacl classes:", Object.keys(SHACLClassViewFactory_ston.shacl_class_views));
+	console.log("SHACLDiagram::show_class, defineds shacl classes:", Object.keys(this.class_view_factory.shacl_class_views));
 	if (!class_uri) {
 	    return;
 	}
@@ -126,7 +125,7 @@ export default class SHACLDiagram extends React.Component {
 	    return;
 	}
 	
-	if (!(class_uri in SHACLClassViewFactory_ston.shacl_class_views)) {
+	if (!(class_uri in this.class_view_factory.shacl_class_views)) {
 	    alert("no such class defined: " + class_uri);
 	    return;
 	}
@@ -160,7 +159,11 @@ export default class SHACLDiagram extends React.Component {
 
     render() {
 	console.log("SHACLDiagram::render");
-	let all_classes = Object.keys(SHACLClassViewFactory_ston.shacl_class_views);	
+	if (this.class_view_factory == null) {
+	    return (<h1>loading... LOADING... loading...</h1>);
+	}
+	
+	let all_classes = Object.keys(this.class_view_factory.shacl_class_views);	
 	return (<div>
 		<button onClick={this.add_class}>ADD CLASS</button>
 		<DropdownList items={all_classes} selected_item={this.state.curr_show_class} onChange={v => this.show_class(v)} special_skip={true}/>

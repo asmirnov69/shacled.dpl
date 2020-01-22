@@ -40,19 +40,17 @@ export default class SHACLEditor extends React.Component {
     constructor(props) {
 	super(props);
 	this.settings_dialog = null;
-	this.state = {dataset_url: null}
+	this.state = {dataset_url: null};
 	this.shacl_diagram = null;
 	this.shacl_diagram_component = (<h1>empty</h1>);
     }
 
     set_new_dataset_url(new_dataset_url) {
-	this.setState({dataset_url: new_dataset_url}, () => {
-	    this.shacl_diagram_component = (<SHACLDiagram key={utils.generateQuickGuid()}
-					    ref={r=>this.shacl_diagram=r}
-					    communicator={this.props.communicator}
-					    dataset_url={new_dataset_url}/>);
-	    this.forceUpdate();
-	});		     
+	this.shacl_diagram_component = (<SHACLDiagram key={utils.generateQuickGuid()}
+					ref={r=>this.shacl_diagram=r}
+					communicator={this.props.communicator}
+					dataset_url={new_dataset_url}/>);
+	this.setState({dataset_url: new_dataset_url});
     }
 
     
@@ -71,9 +69,6 @@ export default class SHACLEditor extends React.Component {
 		 </div>
 		</div>);
 
-	/*		
-	*/
-	
 	/*
 	return (<div style={{display: "grid", width: "100%", height: "100%",
 			     gridTemplateColumns: "180px auto",
