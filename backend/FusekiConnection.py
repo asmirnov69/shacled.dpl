@@ -16,7 +16,6 @@ def to_UBL(v):
     elif isinstance(v, j.B):
         ret_v = {'UBLType': 'B', 'resource': v.jena_resource}
     elif isinstance(v, j.L):
-        #ipdb.set_trace()
         ret_v = {'UBLType': 'L', 'resource': v.jena_literal.toString()}
     else:
         raise Exception("to_UBL: unknown value %s" % v)
@@ -45,22 +44,25 @@ class FusekiConnection:
         print "Fuseki::set_base_uri:", base_uri
         prefix.set_base_uri(base_uri)
         
-    def select(self, rq):
-        print "Fuseki::select:", rq
-        rq_res = self.fuseki_conn.select(rq)
+    def select(self, rq, initial_bindings_):
+        print "Fuseki::select:", rq, initial_bindings_
+        initial_bindings = {k:j.U(v) for k, v in initial_bindings_.items()}
+        rq_res = self.fuseki_conn.select(rq, initial_bindings)
         print "Fuseki::select res:"
         ret = {}
         for col in rq_res.columns:
             ret[col] = to_json_UBL(rq_res.loc[:, col])
         return ret
 
-    def update(self, rq):
-        print "Fuseki::update:", rq
-        self.fuseki_conn.update(rq)
+    def update(self, rq, initial_bindings_):
+        print "Fuseki::update:", rq, initial_bindings_
+        initial_bindings = {k:j.U(v) for k, v in initial_bindings_.items()}
+        self.fuseki_conn.update(rq, initial_bindings)
         print "DONE Fuseki::update:"
         
-    def construct(self, rq):
-        print "Fuseki::construct:", rq
-        rq_res = self.fuseki_conn.construct(rq)
+    def construct(self, rq, initial_bindings_):
+        print "Fuseki::construct:", rq, initial_bindings_
+        initial_bindings = {k:j.U(v) for k, v in initial_bindings_.items()}
+        rq_res = self.fuseki_conn.construct(rq, initial_bindings)
         print "Fuseki::construct res:"
         return map(lambda row: map(to_UBL, row), rq_res)

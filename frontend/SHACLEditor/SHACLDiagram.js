@@ -50,20 +50,6 @@ export default class SHACLDiagram extends React.Component {
     
     load_classes() {
 	let class_uris = Array.from(this.state.class_uris);
-	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
-	let rq_diagram = `
-        construct {
-          ?class_uri rdfs:subClassOf ?superclass_uri;
-                     ?cp_path ?cp_value_type_uri.
-        } where {
-          values (?class_uri) { ${class_uris_s} }
-          graph <testdb:shacl-defs> {
-            ?class_shape sh:targetClass ?class_uri.
-            optional {?class_shape sh:property [ sh:path ?cp_path; sh:class ?cp_value_type_uri ]}
-            optional {?class_uri rdfs:subClassOf ?superclass_uri}
-          }
-        }`;
-
 	let new_uris = class_uris.filter(x => !(x in this.rdf_diagram.nodes));
 	let todel_uris = Object.keys(this.rdf_diagram.nodes).filter(x => !(this.state.class_uris.has(x)));
 	console.log("class_uris:", class_uris);
@@ -73,7 +59,25 @@ export default class SHACLDiagram extends React.Component {
 	this.rdf_diagram.set_nodes(new_nodes);
 	this.rdf_diagram.remove_nodes(todel_uris);
 
-	this.fuseki_prx.construct(rq_diagram).then(rq_res_ => {
+	let ib = {};
+	ib.g = "testdb:shacl-defs";
+	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
+	let rq_diagram = `
+        construct {
+          ?class_uri rdfs:subClassOf ?superclass_uri;
+                     ?cp_path ?cp_value_type_uri.
+        } where {
+          values (?class_uri) { ${class_uris_s} }
+          graph ?g {
+            ?class_shape sh:targetClass ?class_uri.
+            optional {?class_shape sh:property [ 
+                          sh:path ?cp_path; sh:class ?cp_value_type_uri 
+                      ]}
+            optional {?class_uri rdfs:subClassOf ?superclass_uri}
+          }
+        }`;
+	
+	this.fuseki_prx.construct(rq_diagram, ib).then(rq_res_ => {
 	    let rq_res = utils.to_n3_model(rq_res_);
 	    this.rdf_diagram.set_diagram(rq_res);
 	    this.rdf_diagram.refresh();

@@ -10,9 +10,6 @@ sys.path.append(os.path.join(os.environ['dipole_topdir'], "src"))
 import libdipole
 import FusekiConnection
 
-sys.path.append(os.path.join(os.environ['dipole_topdir'], "src"))
-import libdipole
-
 @libdipole.exportclass
 class FusekiDatasets:
     def __init__(self, dataset_urls):

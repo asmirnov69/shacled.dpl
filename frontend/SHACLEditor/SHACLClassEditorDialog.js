@@ -13,18 +13,18 @@ class SuperClassChooser extends React.Component {
     }
 
     add_superclass() {
-	let class_uri = "<" + this.props.dialog.state.class_uri + ">";
-	let superclass_uri = "<" + this.state.superclass_uri + ">";
+	let ib = {};
+	ib.class_uri = this.props.dialog.state.class_uri;
+	ib.superclass_uri = this.state.superclass_uri;
+	ib.g = "testdb:shacl-defs";
 	let rq = `insert {
-                     graph <testdb:shacl-defs> { ?class_uri rdfs:subClassOf ?superclass_uri }
+                     graph ?g { ?class_uri rdfs:subClassOf ?superclass_uri }
                      ?class_uri rdfs:subClassOf ?superclass_uri
                   } where {
-                    bind(${class_uri} as ?class_uri)
-                    bind(${superclass_uri} as ?superclass_uri)
                   }`;
         console.log("add_superclass:", rq);                      
 	let fuseki_prx = this.props.dialog.props.shacl_diagram.fuseki_prx;
-	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
+	fuseki_prx.update(rq, ib).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
     }
     
@@ -45,34 +45,31 @@ class ClassPropertyEditor extends React.Component {
     }
 
     __update() {
-	let class_uri = "<" + this.props.dialog.state.class_uri + ">";
-	let old_cp_path = "<" + this.props.class_property.path_uri + ">";
-	let cp_path = "<" + this.state.class_property.path_uri + ">";
-	let cp_vct_uri = SHACLValueConstrTypeFactory_ston.value_constr_types[this.state.class_property.value_constr_type].value_constr_type_uri;
-	let cp_value_type_uri = "<" + this.state.class_property.value_type_uri + ">";
+	let ib = {};
+	ib.g = "testdb:shacl-defs";
+	ib.class_uri = this.props.dialog.state.class_uri;
+	ib.old_cp_path = this.props.class_property.path_uri;
+	ib.cp_path = this.state.class_property.path_uri;
+	ib.cp_vct_uri = SHACLValueConstrTypeFactory_ston.value_constr_types[this.state.class_property.value_constr_type].value_constr_type_uri;
+	ib.cp_value_type_uri = this.state.class_property.value_type_uri;
 	let rq = `delete {
-                    graph <testdb:shacl-defs> {
+                    graph ?g {
                       ?cp ?old_cp_pred ?old_cp_obj
                     }
                   } insert {
-                    graph <testdb:shacl-defs> {
+                    graph ?g {
                       ?cp sh:path ?cp_path; ?cp_vct_uri ?cp_value_type_uri; sh:minCount 1; sh:maxCount 1
                     }
                   } where {
-                    bind(${class_uri} as ?class_uri)
-                    bind(${cp_path} as ?cp_path)
-                    bind(${old_cp_path} as ?old_cp_path)
-                    bind(${cp_vct_uri} as ?cp_vct_uri)
-                    bind(${cp_value_type_uri} as ?cp_value_type_uri)
-                    graph <testdb:shacl-defs> {
+                    graph ?g {
                       ?class_shape sh:targetClass ?class_uri; sh:property ?cp.
                       ?cp sh:path ?old_cp_path.
                       ?cp ?old_cp_pred ?old_cp_obj
                     }
                   }`
-	console.log("__update:", rq);
+	console.log("__update:", rq, ib);
 	let fuseki_prx = this.props.dialog.props.shacl_diagram.fuseki_prx;
-	fuseki_prx.update(rq).then(() => this.props.dialog.__refresh_after_update_rq());
+	fuseki_prx.update(rq, ib).then(() => this.props.dialog.__refresh_after_update_rq());
 	this.props.dialog.setState({subdialog_open: false});
     }
     
@@ -146,24 +143,24 @@ export default class SHACLClassEditorDialog extends React.Component {
     }
     
     __remove_class_property(class_property) {
-	let class_property_path_uri = "<" + class_property.path_uri + ">";
-	let class_uri = "<" + this.state.class_uri + ">";
+	let ib = {};
+	ib.g = "testdb:shacl-defs";
+	ib.class_property_path_uri = class_property.path_uri;
+	ib.class_uri = this.state.class_uri;
 	let rq = `delete {
-                   graph <testdb:shacl-defs> {
+                   graph ?g {
                     ?cp ?p ?o
                    }
                   } where {
-                   graph <testdb:shacl-defs> {
-                    bind(${class_uri} as ?class_uri)
-                    bind(${class_property_path_uri} as ?class_property_path_uri)
+                   graph ?g {
                     ?class_shape sh:targetClass ?class_uri; sh:property ?cp.
                     ?cp sh:path ?class_property_path_uri.
                     ?cp ?p ?o
                     }
                   }`
-	console.log("__remove_class_property:", rq);
+	console.log("__remove_class_property:", rq, ib);
 	let fuseki_prx = this.props.shacl_diagram.class_view_factory.fuseki_prx;
-	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
+	fuseki_prx.update(rq, ib).then(() => this.__refresh_after_update_rq());
     }
 
     __edit_class_property(class_property) {
@@ -173,25 +170,27 @@ export default class SHACLClassEditorDialog extends React.Component {
     
     __add_new_class_property() {
 	// if (this.state.new_class_property in ... -- check if such cprop already exists
-	let class_property = utils.get_uri("testdb", utils.generateQuickGuid());
-	let class_property_path = "<" + this.state.new_class_property_path + ">";
-	let class_uri = "<" + this.state.class_uri + ">";
+	let ib = {};
+	ib.g = "testdb:shacl-defs";
+	ib.class_property = utils.get_uri("testdb", utils.generateQuickGuid());
+	ib.class_property_path = this.state.new_class_property_path;
+	ib.class_uri = this.state.class_uri;
 	let rq = `insert { 
-                   graph <testdb:shacl-defs> { 
+                   graph ?g { 
                     ?class_shape sh:property ?class_property.
-                    ?class_property sh:path ?class_property_path; sh:datatype xsd:string; sh:minCount 1; sh:maxCount 1
+                    ?class_property sh:path ?class_property_path; 
+                                    sh:datatype xsd:string; 
+                                    sh:minCount 1; sh:maxCount 1
                    }
                   } where {
-                    graph <testdb:shacl-defs> {
-                      bind(${class_property} as ?class_property)
-                      bind(${class_property_path} as ?class_property_path)
-                      ?class_shape sh:targetClass ${class_uri}
+                    graph ?g {
+                      ?class_shape sh:targetClass ?class_uri
                     }
                   }`;
 
-	console.log("__add_new_class_property:", rq);
+	console.log("__add_new_class_property:", rq, ib);
 	let fuseki_prx = this.props.shacl_diagram.class_view_factory.fuseki_prx;
-	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
+	fuseki_prx.update(rq, ib).then(() => this.__refresh_after_update_rq());
     }
 
     __add_superclass() {
@@ -203,18 +202,18 @@ export default class SHACLClassEditorDialog extends React.Component {
 	//debugger;
 	console.log("__remove_superclass");
 	let shacl_class_view = this.props.shacl_diagram.class_view_factory.shacl_class_views_objs[this.state.class_uri];
-	let class_uri = "<" + this.state.class_uri + ">";
-	let superclass_uri = "<" + key + ">";
+	let ib = {};
+	ib.g = "testdb:shacl-defs";
+	ib.class_uri = this.state.class_uri;
+	ib.superclass_uri = key;
 	let rq = `delete {
-                   graph <testdb:shacl-defs> { ?class_uri rdfs:subClassOf ?superclass_uri }
+                   graph ?g { ?class_uri rdfs:subClassOf ?superclass_uri }
                    ?class_uri rdfs:subClassOf ?superclass_uri
                   } where {
-                    bind(${class_uri} as ?class_uri)
-                    bind(${superclass_uri} as ?superclass_uri)
                   }`;
-	console.log("__remove_superclass:", rq);
+	console.log("__remove_superclass:", rq, ib);
 	let fuseki_prx = this.props.shacl_diagram.class_view_factory.fuseki_prx;
-	fuseki_prx.update(rq).then(() => this.__refresh_after_update_rq());
+	fuseki_prx.update(rq, ib).then(() => this.__refresh_after_update_rq());
     }
     
     render() {

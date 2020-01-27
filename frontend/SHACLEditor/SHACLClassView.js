@@ -12,6 +12,8 @@ export class SHACLClassViewFactory {
     }
 
     refresh(class_uris) {
+	let ib = {};
+	ib.g = "testdb:shacl-defs";
 	let values_class_uris = '';
 	if (class_uris) {
 	    let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
@@ -19,7 +21,7 @@ export class SHACLClassViewFactory {
 	}
 	let rq_class_details = `
             select ?class_uri ?mpath ?mclass ?mdt ?superclass_uri ?subclass_uri
-            from <testdb:shacl-defs> 
+            from ?g 
             where {
               ${values_class_uris}
               {
@@ -37,7 +39,7 @@ export class SHACLClassViewFactory {
               }
             }`;
 
-	return this.fuseki_prx.select(rq_class_details).then(rq_res => {
+	return this.fuseki_prx.select(rq_class_details, ib).then(rq_res => {
 	    let df = utils.to_n3_rows(rq_res);
 	    let class_details = {};
 	    for (let r of df) {

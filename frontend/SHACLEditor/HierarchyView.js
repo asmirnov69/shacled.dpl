@@ -47,7 +47,7 @@ class HierarchyView extends React.Component {
         }
         `;
 
-	this.fuseki_prx.select(rq).then((rq_res) => {
+	this.fuseki_prx.select(rq, {}).then((rq_res) => {
 	    let df = utils.to_n3_rows(rq_res);
 	    let tree_leaves = this.build_tree(df, n3.DataFactory.namedNode('testdb:Security'));
 	    console.log("tree_leaves: ", tree_leaves);
