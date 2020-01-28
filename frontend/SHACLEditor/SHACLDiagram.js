@@ -111,6 +111,7 @@ export default class SHACLDiagram extends React.Component {
 	    console.log("insert done");
 	    return this.class_view_factory.refresh([new_class_uri]);
 	}).then(() => {
+	    SHACLValueConstrTypeFactory_ston.refresh(this.class_view_factory);
 	    let o = this.class_view_factory.get_object(new_class_uri);
 	    this.rdf_diagram.set_nodes([[new_class_uri, o]]);
 	    this.rdf_diagram.refresh();

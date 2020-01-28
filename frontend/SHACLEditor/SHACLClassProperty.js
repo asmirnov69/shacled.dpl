@@ -85,5 +85,5 @@ export class SHACLClassProperty {
 	this.path_uri = path_uri;
 	this.value_constr_type = value_constr_type;
 	this.value_type_uri = value_type_uri;
-    }	    
+    }
 };

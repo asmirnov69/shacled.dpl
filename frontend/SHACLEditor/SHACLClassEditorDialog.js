@@ -16,7 +16,7 @@ class SuperClassChooser extends React.Component {
 	let ib = {};
 	ib.class_uri = this.props.dialog.state.class_uri;
 	ib.superclass_uri = this.state.superclass_uri;
-	ib.g = this.props.dialog.shacl_diagram.props.shapes_graph_uri;
+	ib.g = this.props.dialog.props.shacl_diagram.props.shapes_graph_uri;
 	let rq = `insert {
                      graph ?g { ?class_uri rdfs:subClassOf ?superclass_uri }
                      ?class_uri rdfs:subClassOf ?superclass_uri
