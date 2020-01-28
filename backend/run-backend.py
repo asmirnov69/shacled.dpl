@@ -12,11 +12,11 @@ import FusekiConnection
 
 @libdipole.exportclass
 class FusekiDatasets:
-    def __init__(self, dataset_urls):
-        self.dataset_urls = dataset_urls
+    def __init__(self, dataset_url):
+        self.dataset_url = dataset_url
 
-    def get_dataset_urls(self):
-        return self.dataset_urls
+    def get_dataset_url(self):
+        return self.dataset_url
 
 if __name__ == "__main__":
     # https://github.com/seveas/python-prctl -- prctl wrapper module
@@ -29,9 +29,9 @@ if __name__ == "__main__":
     dispatcher = libdipole.Dispatcher(dpl_server)
     dpl_event_handler.dispatcher = dispatcher
     
-    dataset_urls = ['http://localhost:3030/testdb', 'http://localhost:3030/testdb1']
+    dataset_url = 'http://localhost:3030/testdb'
     print "adding object datasets"
-    dispatcher.add_object("datasets", FusekiDatasets(dataset_urls))
+    dispatcher.add_object("datasets", FusekiDatasets(dataset_url))
     print "adding object shacl_editor"
     dispatcher.add_object("shacl_editor", FusekiConnection.FusekiConnection())
 

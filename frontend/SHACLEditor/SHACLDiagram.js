@@ -60,7 +60,7 @@ export default class SHACLDiagram extends React.Component {
 	this.rdf_diagram.remove_nodes(todel_uris);
 
 	let ib = {};
-	ib.g = "testdb:shacl-defs";
+	ib.g = this.props.shapes_graph_uri;
 	let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
 	let rq_diagram = `
         construct {
@@ -85,30 +85,29 @@ export default class SHACLDiagram extends React.Component {
     }
     
     add_class() {
-	debugger;
-	let class_name = this.new_classname.value;
-	if (class_name.length == 0) {
-	    alert("class name is empty");
+	let new_class_uri = this.new_classname.value;
+	if (new_class_uri.length == 0) {
+	    alert("new class uri is empty");
 	    return;
 	}
 	
-	let new_class_uri = "testdb:" + class_name;
 	if (new_class_uri in this.class_view_factory.shacl_class_views) {
 	    alert("such class is already defined");
 	    return;
 	}
 
-	let random_uri = utils.get_uri("testdb:", utils.generateQuickGuid());	
+	let ib = {};
+	ib.g = this.props.shapes_graph_uri;
+	ib.new_class_uri = new_class_uri;
 	let rq = `insert data {
-               graph <testdb:shacl-defs> { 
-                  ${random_uri} rdf:type sh:NodeShape; sh:targetClass <${new_class_uri}>.
-                  <${new_class_uri}> rdf:type rdfs:Class.
+               graph ?g { 
+                  _:class_shape rdf:type sh:NodeShape; sh:targetClass ?new_class_uri.
+                  ?new_class_uri rdf:type rdfs:Class.
                }
-               <${new_class_uri}> rdf:type rdfs:Class.
             }`;
 
 	console.log(rq);
-	this.fuseki_prx.update(rq).then(() => {
+	this.fuseki_prx.update(rq, ib).then(() => {
 	    console.log("insert done");
 	    return this.class_view_factory.refresh([new_class_uri]);
 	}).then(() => {

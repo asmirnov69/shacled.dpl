@@ -10,6 +10,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {DropdownList} from './misccomponents.js';
 
+/*
 class SHACLEditorSettingsDialog extends React.Component {
     constructor(props) {
 	super(props);
@@ -35,6 +36,7 @@ class SHACLEditorSettingsDialog extends React.Component {
 	);
     }
 };
+*/
 
 export default class SHACLEditor extends React.Component {
     constructor(props) {
@@ -49,26 +51,37 @@ export default class SHACLEditor extends React.Component {
 	this.shacl_diagram_component = (<SHACLDiagram key={utils.generateQuickGuid()}
 					ref={r=>this.shacl_diagram=r}
 					communicator={this.props.communicator}
-					dataset_url={new_dataset_url}/>);
+					dataset_url={new_dataset_url}
+					shapes_graph_uri={this.props.shapes_graph_uri}/>);
 	this.setState({dataset_url: new_dataset_url});
     }
 
+    componentDidMount() {
+	let fuseki_datasets_prx = new FusekiDatasetsPrx(this.props.communicator, 'datasets');
+	fuseki_datasets_prx.get_dataset_url().then(dataset_url => {
+	    this.set_new_dataset_url(dataset_url);
+	});
+    }
+    
     
     render() {
 	return (<div style={{display: "grid", width: "100%", height: "100%",
 			     gridTemplateColumns: "180px auto",
 			     gridTemplateRows: "auto 200px"}}>
 		 <div>
-		<button onClick={() => this.settings_dialog.setState({dialog_open: true, dataset_url: this.state.dataset_url})}>settings</button>
-		  <input type="text" value={this.state.dataset_url}/>
-		<SHACLEditorSettingsDialog ref={r=>this.settings_dialog=r} parent={this}
-		                           onOK={(out_state) => this.set_new_dataset_url(out_state.dataset_url)}/>
+		 <input type="text" value={this.state.dataset_url}/>
+		 <input type="text" value={this.props.shapes_graph_uri}/>
 		 </div>
 		 <div style={{backgroundColor: "cyan"}}>
 		  {this.shacl_diagram_component}
 		 </div>
 		</div>);
 
+	/*
+		 <SHACLEditorSettingsDialog ref={r=>this.settings_dialog=r} parent={this}
+		                            onOK={(out_state) => this.set_new_dataset_url(out_state.dataset_url)}/>
+	*/
+	
 	/*
 	return (<div style={{display: "grid", width: "100%", height: "100%",
 			     gridTemplateColumns: "180px auto",

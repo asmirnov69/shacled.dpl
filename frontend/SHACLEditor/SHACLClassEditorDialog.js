@@ -16,7 +16,7 @@ class SuperClassChooser extends React.Component {
 	let ib = {};
 	ib.class_uri = this.props.dialog.state.class_uri;
 	ib.superclass_uri = this.state.superclass_uri;
-	ib.g = "testdb:shacl-defs";
+	ib.g = this.props.dialog.shacl_diagram.props.shapes_graph_uri;
 	let rq = `insert {
                      graph ?g { ?class_uri rdfs:subClassOf ?superclass_uri }
                      ?class_uri rdfs:subClassOf ?superclass_uri
@@ -40,13 +40,12 @@ class ClassPropertyEditor extends React.Component {
     constructor(props) {
 	super(props);
 	this.state = {class_property: this.props.class_property}
-
 	this.__update = this.__update.bind(this);
     }
 
     __update() {
 	let ib = {};
-	ib.g = "testdb:shacl-defs";
+	ib.g = this.props.dialog.props.shacl_diagram.props.shapes_graph_uri;
 	ib.class_uri = this.props.dialog.state.class_uri;
 	ib.old_cp_path = this.props.class_property.path_uri;
 	ib.cp_path = this.state.class_property.path_uri;
@@ -144,7 +143,7 @@ export default class SHACLClassEditorDialog extends React.Component {
     
     __remove_class_property(class_property) {
 	let ib = {};
-	ib.g = "testdb:shacl-defs";
+	ib.g = this.props.dialog.shacl_diagram.props.shapes_graph_uri;
 	ib.class_property_path_uri = class_property.path_uri;
 	ib.class_uri = this.state.class_uri;
 	let rq = `delete {
@@ -170,15 +169,15 @@ export default class SHACLClassEditorDialog extends React.Component {
     
     __add_new_class_property() {
 	// if (this.state.new_class_property in ... -- check if such cprop already exists
+	debugger;
 	let ib = {};
-	ib.g = "testdb:shacl-defs";
-	ib.class_property = utils.get_uri("testdb", utils.generateQuickGuid());
+	ib.g = this.props.shacl_diagram.props.shapes_graph_uri;
 	ib.class_property_path = this.state.new_class_property_path;
 	ib.class_uri = this.state.class_uri;
 	let rq = `insert { 
                    graph ?g { 
-                    ?class_shape sh:property ?class_property.
-                    ?class_property sh:path ?class_property_path; 
+                    ?class_shape sh:property _:class_property.
+                    _:class_property sh:path ?class_property_path; 
                                     sh:datatype xsd:string; 
                                     sh:minCount 1; sh:maxCount 1
                    }
@@ -203,7 +202,7 @@ export default class SHACLClassEditorDialog extends React.Component {
 	console.log("__remove_superclass");
 	let shacl_class_view = this.props.shacl_diagram.class_view_factory.shacl_class_views_objs[this.state.class_uri];
 	let ib = {};
-	ib.g = "testdb:shacl-defs";
+	ib.g = this.props.dialog.shacl_diagram.props.shapes_graph_uri;
 	ib.class_uri = this.state.class_uri;
 	ib.superclass_uri = key;
 	let rq = `delete {

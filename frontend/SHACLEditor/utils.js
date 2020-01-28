@@ -6,8 +6,8 @@ export function generateQuickGuid() {
         Math.random().toString(36).substring(2, 15);
 }
 
-export function get_uri(uri_scheme, s) {
-    return "<" + uri_scheme + ":" + s + ">";
+export function get_uri_scheme(uri) {
+    return uri.split(":")[0];
 }
 
 function to_n3_UBL(v) {

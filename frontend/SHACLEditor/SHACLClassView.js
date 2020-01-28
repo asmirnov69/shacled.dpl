@@ -13,7 +13,7 @@ export class SHACLClassViewFactory {
 
     refresh(class_uris) {
 	let ib = {};
-	ib.g = "testdb:shacl-defs";
+	ib.g = this.shacl_diagram.props.shapes_graph_uri;
 	let values_class_uris = '';
 	if (class_uris) {
 	    let class_uris_s = "(<" + class_uris.join(">)(<") + ">)";
